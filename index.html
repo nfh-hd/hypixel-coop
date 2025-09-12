@@ -251,18 +251,29 @@
                     
                     console.log(`API Response for ${playerName}:`, data);
 
-                    if (data.success && data.profiles && data.profiles.length > 0) {
-                        const playerProfile = data.profiles[0]; // Das erste Profil nehmen
-                        const memberData = playerProfile.members[uuid];
-
-                        if (memberData && memberData.hasOwnProperty('purse')) {
-                            const newCoins = memberData.purse;
-                            const newWerte = { ...werte, [playerName]: newCoins };
-                            await set(ref(db, 'coins'), newWerte);
-                            console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
-                        } else {
-                            console.warn(`Konnte keine gültigen Coins für ${playerName} in der API-Antwort finden.`);
+                    if (data.success && data.profiles && Object.keys(data.profiles).length > 0) {
+                        
+                        let playerProfileFound = false;
+                        for (const profileId in data.profiles) {
+                            if (data.profiles.hasOwnProperty(profileId)) {
+                                const profile = data.profiles[profileId];
+                                const memberData = profile.members[uuid];
+                                
+                                if (memberData && memberData.hasOwnProperty('purse')) {
+                                    const newCoins = memberData.purse;
+                                    const newWerte = { ...werte, [playerName]: newCoins };
+                                    await set(ref(db, 'coins'), newWerte);
+                                    console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
+                                    playerProfileFound = true;
+                                    break;
+                                }
+                            }
                         }
+
+                        if (!playerProfileFound) {
+                            console.warn(`Konnte keine gültigen Coins für ${playerName} in irgendeinem Profil finden.`);
+                        }
+
                     } else {
                         console.error("Hypixel API Anfrage war nicht erfolgreich oder keine Profile gefunden.");
                     }
