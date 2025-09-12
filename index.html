@@ -161,7 +161,25 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Firebase-Bibliotheken laden
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
+          authDomain: "hypixel-skyblock-coop.firebaseapp.com",
+          databaseURL: "https://hypixel-skyblock-coop-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "hypixel-skyblock-coop",
+          storageBucket: "hypixel-skyblock-coop.firebasestorage.app",
+          messagingSenderId: "918414851042",
+          appId: "1:918414851042:web:65822393d076675386d7bb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
         document.addEventListener('DOMContentLoaded', () => {
             const ziel = 8000000000;
             let werte = {
@@ -170,14 +188,6 @@
             };
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
-
-            // GitHub API Konfiguration
-            const GITHUB_USERNAME = "nfh-hd";
-            const GITHUB_REPO = "hypixel-coop";
-            const GITHUB_FILE_PATH = "coins.txt";
-            const GITHUB_TOKEN = "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";
-
-            const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
 
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
@@ -189,7 +199,8 @@
                 let val = Number(input.value);
                 if (isNaN(val) || val <= 0) return;
 
-                await loadFromGitHub();
+                // Lade die aktuellsten Werte aus der Datenbank
+                await loadFromFirebase();
 
                 if (add) {
                     werte[name] += val;
@@ -200,7 +211,7 @@
 
                 render();
                 input.value = "";
-                await saveToGitHub();
+                await saveToFirebase();
             }
 
             function render() {
@@ -221,64 +232,28 @@
                 }
             }
 
-            async function saveToGitHub() {
+            // Speichert die Daten in Firebase
+            async function saveToFirebase() {
                 try {
-                    const response = await fetch(GITHUB_API_URL, {
-                        headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`
-                        }
-                    });
-                    if (!response.ok) {
-                        if (response.status === 404) {
-                            console.error("Datei nicht gefunden. Stelle sicher, dass der Pfad korrekt ist.");
-                            return;
-                        }
-                        throw new Error(`GitHub API Fehler (SHA-Abruf): ${response.statusText}`);
-                    }
-                    const data = await response.json();
-                    const sha = data.sha;
-
-                    const newContent = btoa(JSON.stringify(werte));
-
-                    const updateResponse = await fetch(GITHUB_API_URL, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: 'Update coin values',
-                            content: newContent,
-                            sha: sha
-                        })
-                    });
-
-                    if (!updateResponse.ok) {
-                        throw new Error(`GitHub API Fehler (Speichern): ${updateResponse.statusText}`);
-                    }
-                    console.log("Daten erfolgreich auf GitHub gespeichert.");
+                    await set(ref(db, 'coins'), werte);
+                    console.log("Daten erfolgreich in Firebase gespeichert.");
                 } catch (error) {
-                    console.error("Fehler beim Speichern auf GitHub:", error);
+                    console.error("Fehler beim Speichern in Firebase:", error);
                 }
             }
 
-            async function loadFromGitHub() {
+            // Lädt die Daten aus Firebase
+            async function loadFromFirebase() {
                 try {
-                    const response = await fetch(GITHUB_API_URL, {
-                        headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`
-                        }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        const content = atob(data.content);
-                        werte = JSON.parse(content);
+                    const snapshot = await get(ref(db, 'coins'));
+                    if (snapshot.exists()) {
+                        werte = snapshot.val();
                     } else {
-                        console.warn("Datei existiert nicht oder kann nicht geladen werden. Starte mit Standardwerten.");
+                        console.warn("Datenbankpfad existiert nicht. Starte mit Standardwerten.");
                     }
                     render();
                 } catch (error) {
-                    console.error("Fehler beim Laden von GitHub:", error);
+                    console.error("Fehler beim Laden von Firebase:", error);
                     render();
                 }
             }
@@ -311,7 +286,7 @@
             document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
             document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
 
-            loadFromGitHub();
+            loadFromFirebase();
         });
     </script>
 </body>
