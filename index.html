@@ -209,7 +209,7 @@
     <script type="module">
         // Firebase-Bibliotheken laden
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -234,49 +234,48 @@
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
 
-            // ** Hier musst du deine API-Konfiguration eingeben **
+            // ** Deine API-Konfiguration **
             const HYPIXEL_API_KEY = "6fffe1aa-6b08-409c-825d-f5fb1fde99aa";
             const NICO_UUID = "955e2fc6-ec4a-4174-a86e-f8bb307a52c1";
             const NIKLAS_UUID = "d06c6087-2551-4a1d-92b0-d7e7ae47955c";
             const HYPIXEL_API_URL = "https://api.hypixel.net/skyblock/profiles?key=";
-
+            
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
 
-            // Funktion zum Abrufen der Coins aus der Hypixel API
-            async function fetchCoinsAndSave(uuid) {
+            // Funktion zum Abrufen und Speichern der Coins von einem Spieler
+            async function fetchAndSavePlayerCoins(uuid, playerName) {
                 try {
                     const response = await fetch(`${HYPIXEL_API_URL}${HYPIXEL_API_KEY}&uuid=${uuid}`);
                     const data = await response.json();
-
-                    if (data.success && data.profiles && data.profiles.length > 0) {
-                        // Annahme: SkyBlock Profil ist das erste in der Liste und der "purse" Wert existiert
-                        const playerProfile = data.profiles[0].members[uuid];
-                        if (playerProfile) {
-                            return playerProfile.purse;
+            
+                    if (data.success && data.profiles) {
+                        // Findet das Profil, das die UUID enthält
+                        const playerProfile = Object.values(data.profiles[0].members).find(member => member.uuid === uuid);
+                        
+                        if (playerProfile && playerProfile.hasOwnProperty('purse')) {
+                            const newCoins = playerProfile.purse;
+                            // Aktualisiere nur den Wert des jeweiligen Spielers
+                            const newWerte = { ...werte, [playerName]: newCoins };
+                            await set(ref(db, 'coins'), newWerte);
+                            console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
+                        } else {
+                            console.warn(`Konnte keine gültigen Coins für ${playerName} in der API-Antwort finden.`);
                         }
+                    } else {
+                        console.error("Hypixel API Anfrage war nicht erfolgreich oder keine Profile gefunden.");
                     }
-                    console.error("Konnte SkyBlock Coins nicht aus der Hypixel API abrufen.");
-                    return 0;
                 } catch (error) {
                     console.error("Fehler beim Abrufen der Hypixel API:", error);
-                    return 0;
                 }
             }
 
-            // Funktion zum Aktualisieren der Firebase-Datenbank
-            async function updateFirebaseWithApiData() {
-                const nicoCoins = await fetchCoinsAndSave(NICO_UUID);
-                const niklasCoins = await fetchCoinsAndSave(NIKLAS_UUID);
-
-                const newWerte = {
-                    nico: nicoCoins,
-                    niklas: niklasCoins
-                };
-
-                await set(ref(db, 'coins'), newWerte);
-                console.log("Firebase-Datenbank mit Hypixel API-Daten aktualisiert.");
+            // Funktion, die beide Spieler aktualisiert
+            async function updateAllPlayersFromApi() {
+                // Führt die Anfragen asynchron aus, ohne zu warten
+                await fetchAndSavePlayerCoins(NICO_UUID, 'nico');
+                await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas');
             }
 
             // Aktualisiert die Anzeige auf der Webseite
@@ -331,7 +330,10 @@
             document.getElementById("logout-button").addEventListener("click", logout);
 
             // Automatische Aktualisierung alle 60 Sekunden
-            setInterval(updateFirebaseWithApiData, 60000);
+            setInterval(updateAllPlayersFromApi, 60000);
+
+            // Führe die erste Aktualisierung direkt beim Laden aus
+            updateAllPlayersFromApi();
         });
     </script>
 </body>
