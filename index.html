@@ -248,7 +248,7 @@
             }
 
             // Funktion zum Abrufen und Speichern der Coins von einem Spieler
-            async function fetchAndSavePlayerCoins(uuid, playerName, profileName) {
+            async function fetchAndSavePlayerCoins(uuid, playerName) {
                 try {
                     const response = await fetch(`https://api.hypixel.net/v2/skyblock/profiles?key=${HYPIXEL_API_KEY}&uuid=${uuid}`);
                     const data = await response.json();
@@ -257,16 +257,19 @@
 
                     if (data.success && data.profiles && Object.keys(data.profiles).length > 0) {
                         
+                        // Finde das Profil, das die Daten des Spielers enthält
                         const profileArray = Object.values(data.profiles);
-                        const correctProfile = profileArray.find(profile => profile.cute_name.toLowerCase() === profileName.toLowerCase());
+                        const correctProfile = profileArray.find(profile => profile.members[uuid] && profile.members[uuid].purse !== undefined);
                         
-                        if (correctProfile && correctProfile.members[uuid] && correctProfile.members[uuid].purse !== undefined) {
+                        if (correctProfile) {
                             const newCoins = correctProfile.members[uuid].purse;
                             const newWerte = { ...werte, [playerName]: newCoins };
                             await set(ref(db, 'coins'), newWerte);
                             console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
+                            console.log(`Verwendetes Profil für ${playerName}: ${correctProfile.cute_name}`);
                         } else {
-                            console.warn(`Konnte keine gültigen Coins für ${playerName} im Profil ${profileName} finden.`);
+                            console.warn(`Konnte keine gültigen Coins für ${playerName} in irgendeinem Profil finden.`);
+                            console.log(`Alle gefundenen Profile für ${playerName}:`, Object.values(data.profiles).map(p => p.cute_name));
                         }
 
                     } else {
@@ -279,8 +282,8 @@
 
             // Funktion, die beide Spieler aktualisiert
             async function updateAllPlayersFromApi() {
-                await fetchAndSavePlayerCoins(NICO_UUID, 'nico', NICO_PROFILE_NAME);
-                await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas', NIKLAS_PROFILE_NAME);
+                await fetchAndSavePlayerCoins(NICO_UUID, 'nico');
+                await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas');
             }
 
             // Aktualisiert die Anzeige auf der Webseite
