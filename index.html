@@ -253,24 +253,15 @@
 
                     if (data.success && data.profiles && Object.keys(data.profiles).length > 0) {
                         
-                        let playerProfileFound = false;
-                        for (const profileId in data.profiles) {
-                            if (data.profiles.hasOwnProperty(profileId)) {
-                                const profile = data.profiles[profileId];
-                                const memberData = profile.members[uuid];
-                                
-                                if (memberData && memberData.hasOwnProperty('purse')) {
-                                    const newCoins = memberData.purse;
-                                    const newWerte = { ...werte, [playerName]: newCoins };
-                                    await set(ref(db, 'coins'), newWerte);
-                                    console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
-                                    playerProfileFound = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!playerProfileFound) {
+                        const profileArray = Object.values(data.profiles);
+                        const correctProfile = profileArray.find(profile => profile.members[uuid] && profile.members[uuid].purse !== undefined);
+                        
+                        if (correctProfile) {
+                            const newCoins = correctProfile.members[uuid].purse;
+                            const newWerte = { ...werte, [playerName]: newCoins };
+                            await set(ref(db, 'coins'), newWerte);
+                            console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
+                        } else {
                             console.warn(`Konnte keine gültigen Coins für ${playerName} in irgendeinem Profil finden.`);
                         }
 
