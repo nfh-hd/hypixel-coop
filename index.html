@@ -238,13 +238,17 @@
             const HYPIXEL_API_KEY = "c671797c-beab-4f10-bd4b-85951a4dfef4";
             const NICO_UUID = "955e2fc6-ec4a-4174-a86e-f8bb307a52c1";
             const NIKLAS_UUID = "d06c6087-2551-4a1d-92b0-d7e7ae47955c";
+
+            // ** Hier sind die Profilnamen eingetragen **
+            const NICO_PROFILE_NAME = "Lime"; 
+            const NIKLAS_PROFILE_NAME = "Raspberry";
             
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
 
             // Funktion zum Abrufen und Speichern der Coins von einem Spieler
-            async function fetchAndSavePlayerCoins(uuid, playerName) {
+            async function fetchAndSavePlayerCoins(uuid, playerName, profileName) {
                 try {
                     const response = await fetch(`https://api.hypixel.net/v2/skyblock/profiles?key=${HYPIXEL_API_KEY}&uuid=${uuid}`);
                     const data = await response.json();
@@ -254,15 +258,15 @@
                     if (data.success && data.profiles && Object.keys(data.profiles).length > 0) {
                         
                         const profileArray = Object.values(data.profiles);
-                        const correctProfile = profileArray.find(profile => profile.members[uuid] && profile.members[uuid].purse !== undefined);
+                        const correctProfile = profileArray.find(profile => profile.cute_name.toLowerCase() === profileName.toLowerCase());
                         
-                        if (correctProfile) {
+                        if (correctProfile && correctProfile.members[uuid] && correctProfile.members[uuid].purse !== undefined) {
                             const newCoins = correctProfile.members[uuid].purse;
                             const newWerte = { ...werte, [playerName]: newCoins };
                             await set(ref(db, 'coins'), newWerte);
                             console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
                         } else {
-                            console.warn(`Konnte keine gültigen Coins für ${playerName} in irgendeinem Profil finden.`);
+                            console.warn(`Konnte keine gültigen Coins für ${playerName} im Profil ${profileName} finden.`);
                         }
 
                     } else {
@@ -275,8 +279,8 @@
 
             // Funktion, die beide Spieler aktualisiert
             async function updateAllPlayersFromApi() {
-                await fetchAndSavePlayerCoins(NICO_UUID, 'nico');
-                await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas');
+                await fetchAndSavePlayerCoins(NICO_UUID, 'nico', NICO_PROFILE_NAME);
+                await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas', NIKLAS_PROFILE_NAME);
             }
 
             // Aktualisiert die Anzeige auf der Webseite
