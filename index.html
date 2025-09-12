@@ -196,22 +196,12 @@
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
                 <div class="value" id="nico-remaining">Verbleibend: 8.000.000.000</div>
-                <div class="controls hidden" id="nico-controls">
-                    <input type="number" id="nico-input" placeholder="Coins eingeben" />
-                    <button id="nico-add-button">+ Addieren</button>
-                    <button class="minus" id="nico-minus-button">- Abziehen</button>
-                </div>
             </div>
 
             <div id="niklas-section" class="player-section">
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
                 <div class="value" id="niklas-remaining">Verbleibend: 8.000.000.000</div>
-                <div class="controls hidden" id="niklas-controls">
-                    <input type="number" id="niklas-input" placeholder="Coins eingeben" />
-                    <button id="niklas-add-button">+ Addieren</button>
-                    <button class="minus" id="niklas-minus-button">- Abziehen</button>
-                </div>
             </div>
         </div>
     </div>
@@ -244,33 +234,52 @@
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
 
+            // ** Hier musst du deine API-Konfiguration eingeben **
+            const HYPIXEL_API_KEY = "6fffe1aa-6b08-409c-825d-f5fb1fde99aa";
+            const NICO_UUID = "955e2fc6-ec4a-4174-a86e-f8bb307a52c1";
+            const NIKLAS_UUID = "d06c6087-2551-4a1d-92b0-d7e7ae47955c";
+            const HYPIXEL_API_URL = "https://api.hypixel.net/skyblock/profiles?key=";
+
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
 
-            async function update(name, add) {
-                if (!istAdmin) return;
-                const input = document.getElementById(`${name}-input`);
-                let val = Number(input.value);
-                if (isNaN(val) || val <= 0) return;
+            // Funktion zum Abrufen der Coins aus der Hypixel API
+            async function fetchCoinsAndSave(uuid) {
+                try {
+                    const response = await fetch(`${HYPIXEL_API_URL}${HYPIXEL_API_KEY}&uuid=${uuid}`);
+                    const data = await response.json();
 
-                // Lade die aktuellsten Werte direkt vor dem Speichern, um Konflikte zu vermeiden
-                const snapshot = await get(ref(db, 'coins'));
-                if (snapshot.exists()) {
-                    werte = snapshot.val();
+                    if (data.success && data.profiles && data.profiles.length > 0) {
+                        // Annahme: SkyBlock Profil ist das erste in der Liste und der "purse" Wert existiert
+                        const playerProfile = data.profiles[0].members[uuid];
+                        if (playerProfile) {
+                            return playerProfile.purse;
+                        }
+                    }
+                    console.error("Konnte SkyBlock Coins nicht aus der Hypixel API abrufen.");
+                    return 0;
+                } catch (error) {
+                    console.error("Fehler beim Abrufen der Hypixel API:", error);
+                    return 0;
                 }
-
-                if (add) {
-                    werte[name] += val;
-                } else {
-                    werte[name] -= val;
-                    if (werte[name] < 0) werte[name] = 0;
-                }
-
-                input.value = "";
-                await saveToFirebase();
             }
 
+            // Funktion zum Aktualisieren der Firebase-Datenbank
+            async function updateFirebaseWithApiData() {
+                const nicoCoins = await fetchCoinsAndSave(NICO_UUID);
+                const niklasCoins = await fetchCoinsAndSave(NIKLAS_UUID);
+
+                const newWerte = {
+                    nico: nicoCoins,
+                    niklas: niklasCoins
+                };
+
+                await set(ref(db, 'coins'), newWerte);
+                console.log("Firebase-Datenbank mit Hypixel API-Daten aktualisiert.");
+            }
+
+            // Aktualisiert die Anzeige auf der Webseite
             function render() {
                 ["nico", "niklas"].forEach(name => {
                     document.getElementById(`${name}-value`).textContent = formatNumber(werte[name]);
@@ -282,25 +291,21 @@
 
                 const totalCoins = werte.nico + werte.niklas;
                 document.getElementById('total-coins').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
+            }
 
-                if (istAdmin) {
-                    document.getElementById("nico-controls").classList.remove("hidden");
-                    document.getElementById("niklas-controls").classList.remove("hidden");
+            // onValue-Listener für Live-Updates
+            onValue(ref(db, 'coins'), (snapshot) => {
+                if (snapshot.exists()) {
+                    werte = snapshot.val();
                 } else {
-                    document.getElementById("nico-controls").classList.add("hidden");
-                    document.getElementById("niklas-controls").classList.add("hidden");
+                    console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
+                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
+                    werte = { nico: 0, niklas: 0 };
                 }
-            }
+                render();
+            });
 
-            async function saveToFirebase() {
-                try {
-                    await set(ref(db, 'coins'), werte);
-                    console.log("Daten erfolgreich in Firebase gespeichert.");
-                } catch (error) {
-                    console.error("Fehler beim Speichern in Firebase:", error);
-                }
-            }
-
+            // Admin-Login-Funktionen
             function login() {
                 const pw = document.getElementById("password").value;
                 if (pw === ADMIN_PASSWORT) {
@@ -324,22 +329,9 @@
 
             document.getElementById("login-button").addEventListener("click", login);
             document.getElementById("logout-button").addEventListener("click", logout);
-            document.getElementById("nico-add-button").addEventListener("click", () => update("nico", true));
-            document.getElementById("nico-minus-button").addEventListener("click", () => update("nico", false));
-            document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
-            document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
 
-            // Verwende onValue, um Live-Updates zu erhalten
-            onValue(ref(db, 'coins'), (snapshot) => {
-                if (snapshot.exists()) {
-                    werte = snapshot.val();
-                } else {
-                    console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
-                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
-                    werte = { nico: 0, niklas: 0 };
-                }
-                render();
-            });
+            // Automatische Aktualisierung alle 60 Sekunden
+            setInterval(updateFirebaseWithApiData, 60000);
         });
     </script>
 </body>
