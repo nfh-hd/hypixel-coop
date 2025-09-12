@@ -234,8 +234,8 @@
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
 
-            // ** Deine API-Konfiguration **
-            const HYPIXEL_API_KEY = "6fffe1aa-6b08-409c-825d-f5fb1fde99aa";
+            // ** Deine API-Konfiguration mit dem temporären Schlüssel **
+            const HYPIXEL_API_KEY = "c671797c-beab-4f10-bd4b-85951a4dfef4";
             const NICO_UUID = "955e2fc6-ec4a-4174-a86e-f8bb307a52c1";
             const NIKLAS_UUID = "d06c6087-2551-4a1d-92b0-d7e7ae47955c";
             const HYPIXEL_API_URL = "https://api.hypixel.net/skyblock/profiles?key=";
@@ -273,7 +273,7 @@
 
             // Funktion, die beide Spieler aktualisiert
             async function updateAllPlayersFromApi() {
-                // Führt die Anfragen asynchron aus, ohne zu warten
+                // Führt die Anfragen asynchron aus
                 await fetchAndSavePlayerCoins(NICO_UUID, 'nico');
                 await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas');
             }
