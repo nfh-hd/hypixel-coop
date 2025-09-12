@@ -238,7 +238,7 @@
             const HYPIXEL_API_KEY = "c671797c-beab-4f10-bd4b-85951a4dfef4";
             const NICO_UUID = "955e2fc6-ec4a-4174-a86e-f8bb307a52c1";
             const NIKLAS_UUID = "d06c6087-2551-4a1d-92b0-d7e7ae47955c";
-
+            
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
@@ -246,19 +246,17 @@
             // Funktion zum Abrufen und Speichern der Coins von einem Spieler
             async function fetchAndSavePlayerCoins(uuid, playerName) {
                 try {
-                    const response = await fetch(`https://api.hypixel.net/skyblock/profiles?key=${HYPIXEL_API_KEY}&uuid=${uuid}`);
+                    const response = await fetch(`https://api.hypixel.net/v2/skyblock/profiles?key=${HYPIXEL_API_KEY}&uuid=${uuid}`);
                     const data = await response.json();
-
-                    // ** NEUER CONSOLE LOG ZUR FEHLERSUCHE **
+                    
                     console.log(`API Response for ${playerName}:`, data);
 
                     if (data.success && data.profiles && data.profiles.length > 0) {
-                        // Findet das Profil, das die UUID enthält
-                        const playerProfile = Object.values(data.profiles[0].members)[0];
+                        const playerProfile = data.profiles[0]; // Das erste Profil nehmen
+                        const memberData = playerProfile.members[uuid];
 
-                        if (playerProfile && playerProfile.hasOwnProperty('purse')) {
-                            const newCoins = playerProfile.purse;
-                            // Aktualisiere nur den Wert des jeweiligen Spielers
+                        if (memberData && memberData.hasOwnProperty('purse')) {
+                            const newCoins = memberData.purse;
                             const newWerte = { ...werte, [playerName]: newCoins };
                             await set(ref(db, 'coins'), newWerte);
                             console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert.`);
@@ -298,44 +296,44 @@
                 if (snapshot.exists()) {
                     werte = snapshot.val();
                 } else {
-                    console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
-                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
-                    werte = { nico: 0, niklas: 0 };
+                        console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
+                        set(ref(db, 'coins'), { nico: 0, niklas: 0 });
+                        werte = { nico: 0, niklas: 0 };
+                    }
+                    render();
+                });
+    
+                // Admin-Login-Funktionen
+                function login() {
+                    const pw = document.getElementById("password").value;
+                    if (pw === ADMIN_PASSWORT) {
+                        istAdmin = true;
+                        document.getElementById("feedback").textContent = "Erfolgreich als Admin eingeloggt!";
+                        document.getElementById("feedback").style.color = "#00ff99";
+                    } else {
+                        istAdmin = false;
+                        document.getElementById("feedback").textContent = "Falsches Passwort!";
+                        document.getElementById("feedback").style.color = "#ff6666";
+                    }
+                    render();
                 }
-                render();
-            });
 
-            // Admin-Login-Funktionen
-            function login() {
-                const pw = document.getElementById("password").value;
-                if (pw === ADMIN_PASSWORT) {
-                    istAdmin = true;
-                    document.getElementById("feedback").textContent = "Erfolgreich als Admin eingeloggt!";
-                    document.getElementById("feedback").style.color = "#00ff99";
-                } else {
+                function logout() {
                     istAdmin = false;
-                    document.getElementById("feedback").textContent = "Falsches Passwort!";
-                    document.getElementById("feedback").style.color = "#ff6666";
+                    document.getElementById("feedback").textContent = "Als Gast eingeloggt";
+                    document.getElementById("feedback").style.color = "#ffecb3";
+                    render();
                 }
-                render();
-            }
 
-            function logout() {
-                istAdmin = false;
-                document.getElementById("feedback").textContent = "Als Gast eingeloggt";
-                document.getElementById("feedback").style.color = "#ffecb3";
-                render();
-            }
+                document.getElementById("login-button").addEventListener("click", login);
+                document.getElementById("logout-button").addEventListener("click", logout);
 
-            document.getElementById("login-button").addEventListener("click", login);
-            document.getElementById("logout-button").addEventListener("click", logout);
+                // Automatische Aktualisierung alle 60 Sekunden
+                setInterval(updateAllPlayersFromApi, 60000);
 
-            // Automatische Aktualisierung alle 60 Sekunden
-            setInterval(updateAllPlayersFromApi, 60000);
-
-            // Führe die erste Aktualisierung direkt beim Laden aus
-            updateAllPlayersFromApi();
-        });
+                // Führe die erste Aktualisierung direkt beim Laden aus
+                updateAllPlayersFromApi();
+            });
     </script>
 </body>
 </html>
