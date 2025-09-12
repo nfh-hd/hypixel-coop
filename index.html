@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Hypixel SkyBlock Ziel-Counter</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      margin: 0;
+      height: 60vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #e6eef8;
+      background: radial-gradient(circle at top, #ffd700 10%, #b8860b 15%, #0b1220 100%);
+      background-attachment: fixed;
+      overflow: hidden;
+    }
+
+    @keyframes floatCoins {
+      from { background-position: 0 0; }
+      to { background-position: 0 1000px; }
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      background: rgba(15,15,15,0.9);
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(255,215,0,0.5), inset 0 0 12px rgba(255,215,0,0.2);
+      width: 700px;
+      text-align: center;
+      border: 2px solid #ffd700;
+    }
+
+    h1 { 
+      margin-bottom: 10px; 
+      color: #ffd700;
+      text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
+      font-size: 25px;
+    }
+
+    h2 { 
+      margin: 50px 0 5px; 
+      color: #ffcc33;
+      text-shadow: 0 0 6px #ffaa00;
+    }
+
+    .value { 
+      font-size: 18px; 
+      font-weight: bold; 
+      color: #ffffff;
+      text-shadow: 0 0 4px #ffd700;
+      margin-top: 2px;
+    }
+
+    .controls {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    input {
+      padding: 15px;
+      border-radius: 100px;
+      border: 2px solid #ffd700;
+      background: #1c1c1c;
+      color: #e6eef8;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      width: 400px;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 2px solid #111;
+      cursor: pointer;
+      background: linear-gradient(180deg, #ffdd44, #ff9900);
+      color: #111;
+      font-weight: bold;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      text-shadow: 0 0 4px #ffd700;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(255,215,0,0.6);
+    }
+    button.minus { 
+      background: linear-gradient(180deg, #e63939, #a83232); 
+      color: #fff;
+      text-shadow: 0 0 4px #000;
+    }
+
+    .remaining { 
+      font-size: 20px; 
+      color: #ffecb3; 
+      margin-top: 10px; 
+    }
+
+    #login-area {
+      margin-bottom: 20px;
+    }
+    #feedback {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #ff6666;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Ziel: 16,000,000,000 Coins</h1>
+
+    <!-- Login Bereich -->
+    <div id="login-area">
+      <input type="password" id="password" placeholder="Admin Passwort" />
+      <button onclick="login()">Login</button>
+      <button onclick="logout()">Logout</button>
+      <div id="feedback"></div>
+    </div>
+
+    <!-- Nico -->
+    <div id="nico-section">
+      <h2>🪙 Nico</h2>
+      <div class="remaining" id="nico-value">0</div>
+      <div class="value" id="nico-remaining">Verbleibend: 8,000,000,000</div>
+      <div class="controls hidden" id="nico-controls">
+        <input type="number" id="nico-input" placeholder="Coins eingeben" />
+        <button onclick="update('nico', true)">- Abziehen</button>
+        <button class="minus" onclick="update('nico', false)">+ Addieren</button>
+      </div>
+    </div>
+
+    <!-- Niklas -->
+    <div id="niklas-section">
+      <h2>🪙 Niklas</h2>
+      <div class="remaining" id="niklas-value">0</div>
+      <div class="value" id="niklas-remaining">Verbleibend: 8,000,000,000</div>
+      <div class="controls hidden" id="niklas-controls">
+        <input type="number" id="niklas-input" placeholder="Coins eingeben" />
+        <button onclick="update('niklas', true)">- Abziehen</button>
+        <button class="minus" onclick="update('niklas', false)">+ Addieren</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ziel = 8000000000;
+    let werte = { nico: 0, niklas: 0 };
+    const ADMIN_PASSWORT = "SBCS666"; 
+    let istAdmin = false;
+
+    function formatNumber(n) {
+      return n.toLocaleString('de-DE');
+    }
+
+    function update(name, plus) {
+      if (!istAdmin) return;
+      const input = document.getElementById(name + "-input");
+      let val = Number(input.value);
+      if (isNaN(val) || val <= 0) return;
+      if (plus) {
+        werte[name] += val;
+      } else {
+        werte[name] -= val;
+        if (werte[name] < 0) werte[name] = 0;
+      }
+      render();
+      input.value = "";
+      saveLocal();
+    }
+
+    function render() {
+      ["nico", "niklas"].forEach(name => {
+        document.getElementById(name + "-value").textContent = formatNumber(werte[name]);
+        let remaining = ziel - werte[name];
+        if (remaining < 0) remaining = 0;
+        document.getElementById(name + "-remaining").textContent =
+          "Verbleibend: " + formatNumber(remaining);
+      });
+
+      if (istAdmin) {
+        document.getElementById("nico-controls").classList.remove("hidden");
+        document.getElementById("niklas-controls").classList.remove("hidden");
+      } else {
+        document.getElementById("nico-controls").classList.add("hidden");
+        document.getElementById("niklas-controls").classList.add("hidden");
+      }
+    }
+
+    function saveLocal() {
+      localStorage.setItem("werte", JSON.stringify(werte));
+    }
+
+    function loadLocal() {
+      const saved = localStorage.getItem("werte");
+      if (saved) {
+        werte = JSON.parse(saved);
+      }
+      render();
+    }
+
+    function login() {
+      const pw = document.getElementById("password").value;
+      if (pw === ADMIN_PASSWORT) {
+        istAdmin = true;
+        document.getElementById("feedback").textContent = "Erfolgreich als Admin eingeloggt!";
+        document.getElementById("feedback").style.color = "#00ff99";
+      } else {
+        istAdmin = false;
+        document.getElementById("feedback").textContent = "Falsches Passwort!";
+        document.getElementById("feedback").style.color = "#ff6666";
+      }
+      render();
+    }
+
+    function logout() {
+      istAdmin = false;
+      document.getElementById("feedback").textContent = "Als Gast eingeloggt";
+      document.getElementById("feedback").style.color = "#ffecb3";
+      render();
+    }
+
+    loadLocal();
+  </script>
+</body>
+</html>
