@@ -9,16 +9,16 @@
         body {
             font-family: 'Press Start 2P', cursive;
             margin: 0;
-            height: 100vh; /* Changed to 100vh for better vertical alignment */
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #e6eef8;
             background: radial-gradient(circle at top, #ffd700 10%, #b8860b 15%, #0b1220 100%);
             background-attachment: fixed;
-            overflow: auto; /* Allow scrolling if content is too large */
-            padding: 20px; /* Add some padding */
-            box-sizing: border-box; /* Include padding in element's total width and height */
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .card {
@@ -28,13 +28,13 @@
             padding: 28px;
             border-radius: 16px;
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 12px rgba(255, 215, 0, 0.2);
-            width: fit-content; /* Adjust width to content */
-            max-width: 90%; /* Max width for responsiveness */
+            width: fit-content;
+            max-width: 90%;
             text-align: center;
             border: 2px solid #ffd700;
-            display: flex; /* Changed to flex for better control over inner elements */
-            flex-direction: column; /* Stack children vertically */
-            gap: 20px; /* Spacing between sections */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         h1 {
@@ -45,16 +45,16 @@
         }
 
         h2 {
-            margin: 20px 0 5px; /* Adjusted margin */
+            margin: 20px 0 5px;
             color: #ffcc33;
             text-shadow: 0 0 6px #ffaa00;
-            font-size: 18px; /* Adjusted font size */
+            font-size: 18px;
         }
 
         .total-coins {
-            font-size: 22px; /* Larger font for total coins */
+            font-size: 22px;
             font-weight: bold;
-            color: #00ff99; /* Green for total */
+            color: #00ff99;
             text-shadow: 0 0 8px #00ff99;
             margin-top: 15px;
             margin-bottom: 30px;
@@ -71,28 +71,26 @@
         .controls {
             margin-top: 12px;
             display: flex;
-            flex-direction: column; /* Stack input and buttons vertically for smaller width */
+            flex-direction: column;
             align-items: center;
             gap: 8px;
         }
 
-        /* Adjust input width for better fit in smaller sections */
         input[type="number"] {
             padding: 10px;
-            border-radius: 6px; /* Smaller radius for inputs */
+            border-radius: 6px;
             border: 2px solid #ffd700;
             background: #1c1c1c;
             color: #e6eef8;
             font-family: 'Press Start 2P', cursive;
             font-size: 10px;
-            width: 200px; /* Reduced width for individual inputs */
+            width: 200px;
             text-align: center;
         }
 
-        /* Adjust width of password input */
         #password {
             width: 250px;
-            margin-right: 8px; /* Space between input and button */
+            margin-right: 8px;
             padding: 10px;
             border-radius: 6px;
             font-size: 10px;
@@ -103,7 +101,7 @@
             justify-content: center;
             align-items: center;
             margin-bottom: 20px;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
             gap: 8px;
         }
 
@@ -152,17 +150,16 @@
             display: none;
         }
 
-        /* New styles for horizontal arrangement */
         .player-sections-container {
             display: flex;
             justify-content: center;
-            gap: 30px; /* Space between Nico and Niklas sections */
-            flex-wrap: wrap; /* Allow sections to wrap on smaller screens */
+            gap: 30px;
+            flex-wrap: wrap;
         }
 
         .player-section {
-            flex: 1; /* Allow sections to grow and shrink */
-            min-width: 280px; /* Minimum width before wrapping */
+            flex: 1;
+            min-width: 280px;
             background: rgba(30, 30, 30, 0.8);
             padding: 15px;
             border-radius: 10px;
@@ -170,16 +167,14 @@
             box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
         }
 
-        /* Styling for the Add/Subtract buttons within player sections */
         .player-section .controls {
-            flex-direction: row; /* Buttons side-by-side */
+            flex-direction: row;
             justify-content: center;
         }
         .player-section .controls button {
-            width: 100px; /* Fixed width for add/subtract buttons */
+            width: 100px;
             font-size: 10px;
         }
-
     </style>
 </head>
 
@@ -224,7 +219,7 @@
     <script type="module">
         // Firebase-Bibliotheken laden
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -259,7 +254,11 @@
                 let val = Number(input.value);
                 if (isNaN(val) || val <= 0) return;
 
-                await loadFromFirebase(); // Lade die aktuellsten Werte aus der Datenbank
+                // Lade die aktuellsten Werte direkt vor dem Speichern, um Konflikte zu vermeiden
+                const snapshot = await get(ref(db, 'coins'));
+                if (snapshot.exists()) {
+                    werte = snapshot.val();
+                }
 
                 if (add) {
                     werte[name] += val;
@@ -268,7 +267,6 @@
                     if (werte[name] < 0) werte[name] = 0;
                 }
 
-                render();
                 input.value = "";
                 await saveToFirebase();
             }
@@ -282,7 +280,6 @@
                         "Verbleibend: " + formatNumber(remaining);
                 });
 
-                // Update total coins
                 const totalCoins = werte.nico + werte.niklas;
                 document.getElementById('total-coins').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
 
@@ -301,24 +298,6 @@
                     console.log("Daten erfolgreich in Firebase gespeichert.");
                 } catch (error) {
                     console.error("Fehler beim Speichern in Firebase:", error);
-                }
-            }
-
-            async function loadFromFirebase() {
-                try {
-                    const snapshot = await get(ref(db, 'coins'));
-                    if (snapshot.exists()) {
-                        werte = snapshot.val();
-                    } else {
-                        console.warn("Datenbankpfad existiert nicht. Starte mit Standardwerten.");
-                        // Optional: Setze Initialwerte in Firebase, falls noch nichts da ist
-                        await set(ref(db, 'coins'), { nico: 0, niklas: 0 });
-                        werte = { nico: 0, niklas: 0 }; // Setze auch lokale werte
-                    }
-                    render();
-                } catch (error) {
-                    console.error("Fehler beim Laden von Firebase:", error);
-                    render();
                 }
             }
 
@@ -350,7 +329,17 @@
             document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
             document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
 
-            loadFromFirebase();
+            // Verwende onValue, um Live-Updates zu erhalten
+            onValue(ref(db, 'coins'), (snapshot) => {
+                if (snapshot.exists()) {
+                    werte = snapshot.val();
+                } else {
+                    console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
+                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
+                    werte = { nico: 0, niklas: 0 };
+                }
+                render();
+            });
         });
     </script>
 </body>
