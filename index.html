@@ -135,6 +135,18 @@
             width: 200px;
             text-align: center;
         }
+        
+        #ziel-input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 2px solid #ffd700;
+            background: #1c1c1c;
+            color: #e6eef8;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            width: 200px;
+            text-align: center;
+        }
 
         #password {
             width: 250px;
@@ -300,7 +312,7 @@
                 nico: 0,
                 niklas: 0
             };
-            const ADMIN_PASSWORT = "SBCS666";
+            let adminPasswort = null;
             let istAdmin = false;
             
             const loginToggleButton = document.getElementById("login-toggle-button");
@@ -442,7 +454,7 @@
 
             function login() {
                 const pw = passwordInput.value;
-                if (pw === ADMIN_PASSWORT) {
+                if (pw === adminPasswort) {
                     istAdmin = true;
                     feedbackElement.textContent = "Erfolgreich als Admin eingeloggt!";
                     feedbackElement.style.color = "#00ff99";
@@ -504,6 +516,15 @@
                     ziel = 16000000000;
                 }
                 render();
+            });
+
+            onValue(ref(db, 'adminPasswort'), (snapshot) => {
+                if (snapshot.exists()) {
+                    adminPasswort = snapshot.val();
+                    console.log("Admin-Passwort aus Firebase geladen.");
+                } else {
+                    console.warn("Admin-Passwort-Pfad existiert nicht. Bitte setzen Sie ein Passwort in der Firebase-Konsole unter /adminPasswort.");
+                }
             });
         });
     </script>
