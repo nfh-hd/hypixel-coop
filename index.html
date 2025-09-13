@@ -69,7 +69,7 @@
             color: #fff;
             text-decoration: none;
         }
-
+        
         .card {
             position: relative;
             z-index: 1;
@@ -287,6 +287,10 @@
     
     <div class="card">
         <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
+        <div id="ziel-bearbeiten-bereich" class="hidden">
+            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
+            <button id="ziel-speichern-button">Ziel festlegen</button>
+        </div>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
         <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
 
@@ -295,10 +299,6 @@
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
                 <div class="value" id="nico-remaining">Verbleibend: 0</div>
-                <div class="ziel-input-container hidden" id="nico-ziel-container">
-                    <input type="text" id="nico-ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-                    <button id="nico-ziel-button">Ziel festlegen</button>
-                </div>
                 <div class="controls hidden" id="nico-controls">
                     <input type="text" id="nico-input" placeholder="Coins eingeben" />
                     <select id="nico-action-select">
@@ -314,10 +314,6 @@
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
                 <div class="value" id="niklas-remaining">Verbleibend: 0</div>
-                <div class="ziel-input-container hidden" id="niklas-ziel-container">
-                    <input type="text" id="niklas-ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-                    <button id="niklas-ziel-button">Ziel festlegen</button>
-                </div>
                 <div class="controls hidden" id="niklas-controls">
                     <input type="text" id="niklas-input" placeholder="Coins eingeben" />
                     <select id="niklas-action-select">
@@ -442,9 +438,9 @@
                 return value;
             }
             
-            function updateZiel(name) {
+            function updateZiel() {
                 if (!istAdmin) return;
-                const input = document.getElementById(`${name}-ziel-input`);
+                const input = document.getElementById(`ziel-input`);
                 let neuesZiel = parseWithSuffix(input.value);
 
                 if (isNaN(neuesZiel) || neuesZiel < 0) {
@@ -455,8 +451,8 @@
 
                 input.value = "";
                 try {
-                    set(ref(db, `individual_ziels/${name}`), neuesZiel);
-                    console.log(`Ziel für ${name} erfolgreich gespeichert.`);
+                    set(ref(db, `individual_ziels/${currentAdminName}`), neuesZiel);
+                    console.log(`Ziel für ${currentAdminName} erfolgreich gespeichert.`);
                 } catch (error) {
                     console.error("Fehler beim Speichern des Ziels:", error);
                     feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
@@ -502,8 +498,8 @@
             }
 
             function render() {
-                const totalZiel = individuelleZiele.nico + individuelleZiele.niklas;
-                const totalCoins = werte.nico + werte.niklas;
+                const totalZiel = (individuelleZiele.nico || 0) + (individuelleZiele.niklas || 0);
+                const totalCoins = (werte.nico || 0) + (werte.niklas || 0);
 
                 document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
@@ -515,31 +511,28 @@
                     const valueElement = document.getElementById(`${name}-value`);
                     const remainingElement = document.getElementById(`${name}-remaining`);
                     
-                    valueElement.textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
+                    valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
                     
-                    let remaining = individuelleZiele[name] - werte[name];
+                    let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
                     if (remaining < 0) remaining = 0;
                     remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
                 });
 
                 const nicoControls = document.getElementById("nico-controls");
                 const niklasControls = document.getElementById("niklas-controls");
-                const nicoZielContainer = document.getElementById("nico-ziel-container");
-                const niklasZielContainer = document.getElementById("niklas-ziel-container");
+                const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
 
                 nicoControls.classList.add("hidden");
                 niklasControls.classList.add("hidden");
-                nicoZielContainer.classList.add("hidden");
-                niklasZielContainer.classList.add("hidden");
+                zielBearbeitenBereich.classList.add("hidden");
 
                 if (istAdmin) {
                     loginToggleButton.textContent = "Logout";
+                    zielBearbeitenBereich.classList.remove("hidden");
                     if (currentAdminName === "nico") {
                         nicoControls.classList.remove("hidden");
-                        nicoZielContainer.classList.remove("hidden");
                     } else if (currentAdminName === "niklas") {
                         niklasControls.classList.remove("hidden");
-                        niklasZielContainer.classList.remove("hidden");
                     }
                 } else {
                     loginToggleButton.textContent = "Login";
@@ -594,8 +587,7 @@
 
             document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
             document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
-            document.getElementById("nico-ziel-button").addEventListener("click", () => updateZiel("nico"));
-            document.getElementById("niklas-ziel-button").addEventListener("click", () => updateZiel("niklas"));
+            document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
 
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
