@@ -21,6 +21,54 @@
             box-sizing: border-box;
         }
 
+        #login-toggle-button {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #1c1c1c;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        .modal .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal .close-button:hover,
+        .modal .close-button:focus {
+            color: #fff;
+            text-decoration: none;
+        }
+        
         .card {
             position: relative;
             z-index: 1;
@@ -86,18 +134,6 @@
             font-size: 10px;
             width: 200px;
             text-align: center;
-        }
-        
-        /* Dropdown-Stile */
-        select {
-            padding: 10px;
-            border-radius: 6px;
-            border: 2px solid #ffd700;
-            background: #1c1c1c;
-            color: #e6eef8;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            cursor: pointer;
         }
 
         #password {
@@ -187,15 +223,21 @@
 </head>
 
 <body>
+    <button id="login-toggle-button">Login</button>
+    
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="login-area" class="login-controls">
+                <input type="password" id="password" placeholder="Admin Passwort" />
+                <button id="login-button">Login</button>
+                <div id="feedback"></div>
+            </div>
+        </div>
+    </div>
+    
     <div class="card">
         <h1>Ziel: 16.000.000.000 Coins</h1>
-
-        <div class="login-controls" id="login-area">
-            <input type="password" id="password" placeholder="Admin Passwort" />
-            <button id="login-button">Login</button>
-            <button id="logout-button">Logout</button>
-            <div id="feedback"></div>
-        </div>
 
         <div class="total-coins" id="total-coins">Coins Insgesamt: 0</div>
 
@@ -233,11 +275,9 @@
     </div>
 
     <script type="module">
-        // Firebase-Bibliotheken laden
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
           apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
           authDomain: "hypixel-skyblock-coop.firebaseapp.com",
@@ -259,12 +299,40 @@
             };
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
+            
+            const loginToggleButton = document.getElementById("login-toggle-button");
+            const loginModal = document.getElementById("login-modal");
+            const closeButton = document.querySelector(".modal .close-button");
+            const passwordInput = document.getElementById("password");
+            const loginButton = document.getElementById("login-button");
+            const feedbackElement = document.getElementById("feedback");
+
+            loginToggleButton.addEventListener("click", () => {
+                if (istAdmin) {
+                    logout();
+                } else {
+                    loginModal.classList.remove("hidden");
+                }
+            });
+
+            closeButton.addEventListener("click", () => {
+                loginModal.classList.add("hidden");
+                feedbackElement.textContent = "";
+                passwordInput.value = "";
+            });
+            
+            window.addEventListener("click", (event) => {
+                if (event.target === loginModal) {
+                    loginModal.classList.add("hidden");
+                    feedbackElement.textContent = "";
+                    passwordInput.value = "";
+                }
+            });
 
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
 
-            // Aktualisierte update-Funktion, um mit dem Dropdown zu arbeiten
             async function update(name) {
                 if (!istAdmin) return;
                 const input = document.getElementById(`${name}-input`);
@@ -278,7 +346,6 @@
                     return;
                 }
                 
-                // Lade die aktuellsten Werte direkt vor dem Speichern, um Konflikte zu vermeiden
                 const snapshot = await get(ref(db, 'coins'));
                 if (snapshot.exists()) {
                     werte = snapshot.val();
@@ -312,9 +379,12 @@
                 if (istAdmin) {
                     document.getElementById("nico-controls").classList.remove("hidden");
                     document.getElementById("niklas-controls").classList.remove("hidden");
+                    loginToggleButton.textContent = "Logout";
+                    loginModal.classList.add("hidden");
                 } else {
                     document.getElementById("nico-controls").classList.add("hidden");
                     document.getElementById("niklas-controls").classList.add("hidden");
+                    loginToggleButton.textContent = "Login";
                 }
             }
 
@@ -328,34 +398,35 @@
             }
 
             function login() {
-                const pw = document.getElementById("password").value;
+                const pw = passwordInput.value;
                 if (pw === ADMIN_PASSWORT) {
                     istAdmin = true;
-                    document.getElementById("feedback").textContent = "Erfolgreich als Admin eingeloggt!";
-                    document.getElementById("feedback").style.color = "#00ff99";
+                    feedbackElement.textContent = "Erfolgreich als Admin eingeloggt!";
+                    feedbackElement.style.color = "#00ff99";
+                    setTimeout(() => {
+                        loginModal.classList.add("hidden");
+                        passwordInput.value = "";
+                        feedbackElement.textContent = "";
+                    }, 1500);
                 } else {
                     istAdmin = false;
-                    document.getElementById("feedback").textContent = "Falsches Passwort!";
-                    document.getElementById("feedback").style.color = "#ff6666";
+                    feedbackElement.textContent = "Falsches Passwort!";
+                    feedbackElement.style.color = "#ff6666";
                 }
                 render();
             }
 
             function logout() {
                 istAdmin = false;
-                document.getElementById("feedback").textContent = "Als Gast eingeloggt";
-                document.getElementById("feedback").style.color = "#ffecb3";
+                feedbackElement.textContent = "Als Gast eingeloggt";
+                feedbackElement.style.color = "#ffecb3";
                 render();
             }
 
-            document.getElementById("login-button").addEventListener("click", login);
-            document.getElementById("logout-button").addEventListener("click", logout);
-
-            // Event-Listener für die neuen Buttons
+            loginButton.addEventListener("click", login);
             document.getElementById("nico-update-button").addEventListener("click", () => update("nico"));
             document.getElementById("niklas-update-button").addEventListener("click", () => update("niklas"));
 
-            // Verwende onValue, um Live-Updates zu erhalten
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
                     werte = snapshot.val();
