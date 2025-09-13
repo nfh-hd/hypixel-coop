@@ -234,11 +234,9 @@
     </div>
 
     <script type="module">
-        // Firebase-Bibliotheken laden
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
           apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
           authDomain: "hypixel-skyblock-coop.firebaseapp.com",
@@ -253,8 +251,7 @@
         const db = getDatabase(app);
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Änderung 3: Ziel als Variable
-            let ziel = 16000000000; // Startwert
+            let ziel = 16000000000;
             let werte = {
                 nico: 0,
                 niklas: 0
@@ -262,6 +259,19 @@
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
 
+            // Neue Funktion: Zahlen mit Suffixen formatieren
+            function formatWithSuffix(n) {
+                if (n < 1000) {
+                    return n.toLocaleString('de-DE');
+                }
+                const suffixes = ["", "k", "m", "b", "t", "q"];
+                const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
+                const suffix = suffixes[tier];
+                const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
+                return `${rounded}${suffix}`;
+            }
+
+            // Bestehende Funktion: Zahlen normal formatieren
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
@@ -272,7 +282,6 @@
                 let val = Number(input.value);
                 if (isNaN(val) || val <= 0) return;
 
-                // Lade die aktuellsten Werte direkt vor dem Speichern, um Konflikte zu vermeiden
                 const snapshot = await get(ref(db, 'coins'));
                 if (snapshot.exists()) {
                     werte = snapshot.val();
@@ -292,27 +301,23 @@
             function render() {
                 ["nico", "niklas"].forEach(name => {
                     document.getElementById(`${name}-value`).textContent = formatNumber(werte[name]);
-                    // Verbleibende Anzeige für Einzelspieler entfernt
                 });
 
-                // Änderung 2: Coins insgesamt und verbleibend
                 const totalCoins = werte.nico + werte.niklas;
                 const coinsVerbleibend = ziel - totalCoins;
-                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
-                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)}`;
                 
-                // Änderung 3: Ziel bearbeiten
-                document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} Coins`;
-                
+                // Anzeige mit gerundetem Suffix hinzufügen
+                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
+                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
+                document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} (${formatWithSuffix(ziel)}) Coins`;
+
                 if (istAdmin) {
                     document.getElementById("nico-controls").classList.remove("hidden");
                     document.getElementById("niklas-controls").classList.remove("hidden");
-                    // Änderung 3: Eingabefeld anzeigen
                     document.getElementById("ziel-bearbeiten-bereich").classList.remove("hidden");
                 } else {
                     document.getElementById("nico-controls").classList.add("hidden");
                     document.getElementById("niklas-controls").classList.add("hidden");
-                    // Änderung 3: Eingabefeld ausblenden
                     document.getElementById("ziel-bearbeiten-bereich").classList.add("hidden");
                 }
             }
@@ -363,7 +368,6 @@
             document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
             document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
             
-            // Änderung 3: Event-Listener für den Ziel-Speichern-Knopf
             document.getElementById("ziel-speichern-button").addEventListener("click", () => {
                 if (!istAdmin) return;
                 const zielInput = document.getElementById('ziel-input');
@@ -375,7 +379,6 @@
                 }
             });
 
-            // Verwende onValue, um Live-Updates zu erhalten
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
                     werte = snapshot.val();
@@ -387,7 +390,6 @@
                 render();
             });
             
-            // Änderung 3: Lade das Ziel aus Firebase
             onValue(ref(db, 'ziel'), (snapshot) => {
                 if (snapshot.exists()) {
                     ziel = snapshot.val();
