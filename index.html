@@ -334,6 +334,12 @@
             const loginButton = document.getElementById("login-button");
             const feedbackElement = document.getElementById("feedback");
             
+            const modalContent = document.querySelector(".modal-content");
+
+            modalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+            
             loginToggleButton.addEventListener("click", () => {
                 if (istAdmin) {
                     logout();
@@ -448,7 +454,6 @@
                     document.getElementById("niklas-controls").classList.remove("hidden");
                     document.getElementById("ziel-bearbeiten-bereich").classList.remove("hidden");
                     loginToggleButton.textContent = "Logout";
-                    loginModal.classList.add("hidden");
                 } else {
                     document.getElementById("nico-controls").classList.add("hidden");
                     document.getElementById("niklas-controls").classList.add("hidden");
