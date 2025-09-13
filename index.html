@@ -21,7 +21,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        
+
         #login-toggle-button {
             position: fixed;
             top: 20px;
@@ -157,6 +157,14 @@
             font-size: 10px;
         }
         
+        #email-input {
+            width: 250px;
+            margin-right: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
         .login-controls {
             display: flex;
             flex-direction: column;
@@ -253,7 +261,7 @@
             .total-coins {
                 font-size: 18px;
             }
-            
+
             #login-toggle-button {
                 top: 10px;
             }
@@ -269,6 +277,7 @@
             <span class="close-button">&times;</span>
             <div id="login-area" class="login-controls">
                 <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
                 <input type="password" id="password" placeholder="Admin Passwort" />
                 <button id="login-button">Login</button>
                 <div id="feedback"></div>
@@ -355,6 +364,7 @@
             const loginToggleButton = document.getElementById("login-toggle-button");
             const loginModal = document.getElementById("login-modal");
             const closeButton = document.querySelector(".modal .close-button");
+            const emailInput = document.getElementById("email-input");
             const passwordInput = document.getElementById("password");
             const loginButton = document.getElementById("login-button");
             const feedbackElement = document.getElementById("feedback");
@@ -371,6 +381,7 @@
                 } else {
                     loginModal.classList.remove("hidden");
                     feedbackElement.textContent = "";
+                    emailInput.value = "";
                     passwordInput.value = "";
                 }
             });
@@ -378,6 +389,7 @@
             closeButton.addEventListener("click", () => {
                 loginModal.classList.add("hidden");
                 feedbackElement.textContent = "";
+                emailInput.value = "";
                 passwordInput.value = "";
             });
             
@@ -385,6 +397,7 @@
                 if (event.target === loginModal) {
                     loginModal.classList.add("hidden");
                     feedbackElement.textContent = "";
+                    emailInput.value = "";
                     passwordInput.value = "";
                 }
             });
@@ -508,7 +521,7 @@
             }
             
             function login() {
-                const email = "nico@skyblock-coop.com";
+                const email = emailInput.value;
                 const pw = passwordInput.value;
                 
                 signInWithEmailAndPassword(auth, email, pw)
