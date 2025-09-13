@@ -257,7 +257,7 @@
     </div>
     
     <div class="card">
-        <h1>Ziel: 16.000.000.000 Coins</h1>
+        <h1 id="ziel-anzeige">Ziel: 16.000.000.000 Coins</h1>
         <div id="ziel-bearbeiten-bereich" class="hidden">
             <input type="text" id="ziel-input" placeholder="Neues Ziel setzen (z.B. 10m)" />
             <button id="ziel-speichern-button">Ziel speichern</button>
@@ -435,11 +435,9 @@
             function render() {
                 ["nico", "niklas"].forEach(name => {
                     document.getElementById(`${name}-value`).textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
-                    let totalCoins = werte.nico + werte.niklas;
                     let remaining = ziel - werte[name];
                     if (remaining < 0) remaining = 0;
-                    document.getElementById(`${name}-remaining`).textContent =
-                        "Verbleibend: " + formatNumber(remaining);
+                    document.getElementById(`${name}-remaining`).textContent = "Verbleibend: " + formatNumber(remaining);
                 });
 
                 const totalCoins = werte.nico + werte.niklas;
