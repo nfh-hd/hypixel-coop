@@ -137,18 +137,6 @@
             text-align: center;
         }
         
-        #ziel-input {
-            padding: 10px;
-            border-radius: 6px;
-            border: 2px solid #ffd700;
-            background: #1c1c1c;
-            color: #e6eef8;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            width: 200px;
-            text-align: center;
-        }
-
         #password {
             width: 250px;
             margin-right: 8px;
@@ -238,6 +226,18 @@
             flex-direction: row;
             justify-content: center;
         }
+        
+        .ziel-input-container {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ziel-input-container input {
+            width: 200px;
+        }
 
         /* Responsive Design für kleinere Bildschirme */
         @media (max-width: 768px) {
@@ -261,7 +261,7 @@
             .total-coins {
                 font-size: 18px;
             }
-
+            
             #login-toggle-button {
                 top: 10px;
             }
@@ -276,9 +276,9 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <div id="login-area" class="login-controls">
-                <h2>Coop Login</h2>
-                <input type="email" id="email-input" placeholder="E-Mail" />
-                <input type="password" id="password" placeholder="Passwort" />
+                <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
+                <input type="password" id="password" placeholder="Admin Passwort" />
                 <button id="login-button">Login</button>
                 <div id="feedback"></div>
             </div>
@@ -286,12 +286,7 @@
     </div>
     
     <div class="card">
-        <h1 id="ziel-anzeige">Ziel: 16.000.000.000 Coins</h1>
-        <div id="ziel-bearbeiten-bereich" class="hidden">
-            <input type="text" id="ziel-input" placeholder="Neues Ziel setzen" />
-            <button id="ziel-speichern-button">Ziel speichern</button>
-        </div>
-
+        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
         <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
 
@@ -299,9 +294,13 @@
             <div id="nico-section" class="player-section">
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
-                <div class="value" id="nico-remaining">Verbleibend: 8.000.000.000</div>
+                <div class="value" id="nico-remaining">Verbleibend: 0</div>
+                <div class="ziel-input-container hidden" id="nico-ziel-container">
+                    <input type="text" id="nico-ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
+                    <button id="nico-ziel-button">Ziel festlegen</button>
+                </div>
                 <div class="controls hidden" id="nico-controls">
-                    <input type="number" id="nico-input" placeholder="Coins eingeben" />
+                    <input type="text" id="nico-input" placeholder="Coins eingeben" />
                     <select id="nico-action-select">
                         <option value="add">Hinzufügen</option>
                         <option value="remove">Entfernen</option>
@@ -314,9 +313,13 @@
             <div id="niklas-section" class="player-section">
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
-                <div class="value" id="niklas-remaining">Verbleibend: 8.000.000.000</div>
+                <div class="value" id="niklas-remaining">Verbleibend: 0</div>
+                <div class="ziel-input-container hidden" id="niklas-ziel-container">
+                    <input type="text" id="niklas-ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
+                    <button id="niklas-ziel-button">Ziel festlegen</button>
+                </div>
                 <div class="controls hidden" id="niklas-controls">
-                    <input type="number" id="niklas-input" placeholder="Coins eingeben" />
+                    <input type="text" id="niklas-input" placeholder="Coins eingeben" />
                     <select id="niklas-action-select">
                         <option value="add">Hinzufügen</option>
                         <option value="remove">Entfernen</option>
@@ -353,8 +356,11 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            let ziel = 16000000000;
             let werte = {
+                nico: 0,
+                niklas: 0
+            };
+            let individuelleZiele = {
                 nico: 0,
                 niklas: 0
             };
@@ -435,13 +441,35 @@
                 }
                 return value;
             }
+            
+            function updateZiel(name) {
+                if (!istAdmin) return;
+                const input = document.getElementById(`${name}-ziel-input`);
+                let neuesZiel = parseWithSuffix(input.value);
 
-            async function update(name) {
+                if (isNaN(neuesZiel) || neuesZiel < 0) {
+                    feedbackElement.textContent = "Ungültige Zieleingabe!";
+                    feedbackElement.style.color = "#ff6666";
+                    return;
+                }
+
+                input.value = "";
+                try {
+                    set(ref(db, `individual_ziels/${name}`), neuesZiel);
+                    console.log(`Ziel für ${name} erfolgreich gespeichert.`);
+                } catch (error) {
+                    console.error("Fehler beim Speichern des Ziels:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
+                    feedbackElement.style.color = "#ff6666";
+                }
+            }
+
+            async function updateCoins(name) {
                 if (!istAdmin) return;
                 const input = document.getElementById(`${name}-input`);
                 const actionSelect = document.getElementById(`${name}-action-select`);
                 const action = actionSelect.value;
-                let val = Number(input.value);
+                let val = parseWithSuffix(input.value);
 
                 if (isNaN(val) || val < 0) {
                     feedbackElement.textContent = "Ungültige Eingabe!";
@@ -474,49 +502,47 @@
             }
 
             function render() {
-                ["nico", "niklas"].forEach(name => {
-                    document.getElementById(`${name}-value`).textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
-                    let remaining = ziel - werte[name];
-                    if (remaining < 0) remaining = 0;
-                    document.getElementById(`${name}-remaining`).textContent = "Verbleibend: " + formatNumber(remaining);
-                });
-
+                const totalZiel = individuelleZiele.nico + individuelleZiele.niklas;
                 const totalCoins = werte.nico + werte.niklas;
-                const coinsVerbleibend = ziel - totalCoins;
-                
+
+                document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
+                
+                const coinsVerbleibend = totalZiel - totalCoins;
                 document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
-                document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} (${formatWithSuffix(ziel)}) Coins`;
+
+                ["nico", "niklas"].forEach(name => {
+                    const valueElement = document.getElementById(`${name}-value`);
+                    const remainingElement = document.getElementById(`${name}-remaining`);
+                    
+                    valueElement.textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
+                    
+                    let remaining = individuelleZiele[name] - werte[name];
+                    if (remaining < 0) remaining = 0;
+                    remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
+                });
 
                 const nicoControls = document.getElementById("nico-controls");
                 const niklasControls = document.getElementById("niklas-controls");
-                const zielControls = document.getElementById("ziel-bearbeiten-bereich");
+                const nicoZielContainer = document.getElementById("nico-ziel-container");
+                const niklasZielContainer = document.getElementById("niklas-ziel-container");
 
                 nicoControls.classList.add("hidden");
                 niklasControls.classList.add("hidden");
-                zielControls.classList.add("hidden");
+                nicoZielContainer.classList.add("hidden");
+                niklasZielContainer.classList.add("hidden");
 
                 if (istAdmin) {
                     loginToggleButton.textContent = "Logout";
-                    zielControls.classList.remove("hidden");
                     if (currentAdminName === "nico") {
                         nicoControls.classList.remove("hidden");
+                        nicoZielContainer.classList.remove("hidden");
                     } else if (currentAdminName === "niklas") {
                         niklasControls.classList.remove("hidden");
+                        niklasZielContainer.classList.remove("hidden");
                     }
                 } else {
                     loginToggleButton.textContent = "Login";
-                }
-            }
-
-            async function saveZielToFirebase() {
-                try {
-                    await set(ref(db, 'ziel'), ziel);
-                    console.log("Ziel erfolgreich in Firebase gespeichert.");
-                } catch (error) {
-                    console.error("Fehler beim Speichern des Ziels in Firebase:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
-                    feedbackElement.style.color = "#ff6666";
                 }
             }
             
@@ -566,40 +592,27 @@
                 render();
             });
 
-            document.getElementById("nico-update-button").addEventListener("click", () => update("nico"));
-            document.getElementById("niklas-update-button").addEventListener("click", () => update("niklas"));
-            
-            document.getElementById("ziel-speichern-button").addEventListener("click", () => {
-                if (!istAdmin) return;
-                const zielInput = document.getElementById('ziel-input');
-                let neuesZiel = parseWithSuffix(zielInput.value);
-                if (!isNaN(neuesZiel) && neuesZiel > 0) {
-                    ziel = neuesZiel;
-                    saveZielToFirebase();
-                } else {
-                    feedbackElement.textContent = "Ungültige Zieleingabe!";
-                    feedbackElement.style.color = "#ff6666";
-                }
-            });
+            document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
+            document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
+            document.getElementById("nico-ziel-button").addEventListener("click", () => updateZiel("nico"));
+            document.getElementById("niklas-ziel-button").addEventListener("click", () => updateZiel("niklas"));
 
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
                     werte = snapshot.val();
                 } else {
-                    console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
                     set(ref(db, 'coins'), { nico: 0, niklas: 0 });
                     werte = { nico: 0, niklas: 0 };
                 }
                 render();
             });
             
-            onValue(ref(db, 'ziel'), (snapshot) => {
+            onValue(ref(db, 'individual_ziels'), (snapshot) => {
                 if (snapshot.exists()) {
-                    ziel = snapshot.val();
+                    individuelleZiele = snapshot.val();
                 } else {
-                    console.warn("Ziel-Pfad existiert nicht. Setze Standardziel.");
-                    set(ref(db, 'ziel'), 16000000000);
-                    ziel = 16000000000;
+                    set(ref(db, 'individual_ziels'), { nico: 0, niklas: 0 });
+                    individuelleZiele = { nico: 0, niklas: 0 };
                 }
                 render();
             });
@@ -607,5 +620,3 @@
     </script>
 </body>
 </html>
-
-
