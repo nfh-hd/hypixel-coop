@@ -95,6 +95,12 @@
             border-radius: 6px;
             font-size: 10px;
         }
+        
+        /* Neuer Stil für das Zieleingabefeld */
+        #ziel-input {
+            width: 250px;
+            margin: 10px auto;
+        }
 
         .login-controls {
             display: flex;
@@ -134,6 +140,14 @@
             font-size: 20px;
             color: #ffecb3;
             margin-top: 10px;
+        }
+        
+        /* Verbleibende Coins jetzt für die Gesamtansicht */
+        #coins-verbleibend {
+            font-size: 20px;
+            color: #ffecb3;
+            margin-top: 10px;
+            margin-bottom: 20px;
         }
 
         #login-area {
@@ -180,8 +194,12 @@
 
 <body>
     <div class="card">
-        <h1>Ziel: 16.000.000.000 Coins</h1>
-
+        <h1 id="ziel-anzeige">Ziel: 16.000.000.000 Coins</h1>
+        <div id="ziel-bearbeiten-bereich" class="hidden">
+            <input type="number" id="ziel-input" placeholder="Neues Ziel setzen" />
+            <button id="ziel-speichern-button">Ziel speichern</button>
+        </div>
+        
         <div class="login-controls" id="login-area">
             <input type="password" id="password" placeholder="Admin Passwort" />
             <button id="login-button">Login</button>
@@ -189,13 +207,13 @@
             <div id="feedback"></div>
         </div>
 
-        <div class="total-coins" id="total-coins">Coins Insgesamt: 0</div>
-
+        <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
+        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
+        
         <div class="player-sections-container">
             <div id="nico-section" class="player-section">
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
-                <div class="value" id="nico-remaining">Verbleibend: 8.000.000.000</div>
                 <div class="controls hidden" id="nico-controls">
                     <input type="number" id="nico-input" placeholder="Coins eingeben" />
                     <button id="nico-add-button">+ Addieren</button>
@@ -206,7 +224,6 @@
             <div id="niklas-section" class="player-section">
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
-                <div class="value" id="niklas-remaining">Verbleibend: 8.000.000.000</div>
                 <div class="controls hidden" id="niklas-controls">
                     <input type="number" id="niklas-input" placeholder="Coins eingeben" />
                     <button id="niklas-add-button">+ Addieren</button>
@@ -236,7 +253,8 @@
         const db = getDatabase(app);
 
         document.addEventListener('DOMContentLoaded', () => {
-            const ziel = 8000000000;
+            // Änderung 3: Ziel als Variable
+            let ziel = 16000000000; // Startwert
             let werte = {
                 nico: 0,
                 niklas: 0
@@ -274,30 +292,46 @@
             function render() {
                 ["nico", "niklas"].forEach(name => {
                     document.getElementById(`${name}-value`).textContent = formatNumber(werte[name]);
-                    let remaining = ziel - werte[name];
-                    if (remaining < 0) remaining = 0;
-                    document.getElementById(`${name}-remaining`).textContent =
-                        "Verbleibend: " + formatNumber(remaining);
+                    // Verbleibende Anzeige für Einzelspieler entfernt
                 });
 
+                // Änderung 2: Coins insgesamt und verbleibend
                 const totalCoins = werte.nico + werte.niklas;
-                document.getElementById('total-coins').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
-
+                const coinsVerbleibend = ziel - totalCoins;
+                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
+                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)}`;
+                
+                // Änderung 3: Ziel bearbeiten
+                document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} Coins`;
+                
                 if (istAdmin) {
                     document.getElementById("nico-controls").classList.remove("hidden");
                     document.getElementById("niklas-controls").classList.remove("hidden");
+                    // Änderung 3: Eingabefeld anzeigen
+                    document.getElementById("ziel-bearbeiten-bereich").classList.remove("hidden");
                 } else {
                     document.getElementById("nico-controls").classList.add("hidden");
                     document.getElementById("niklas-controls").classList.add("hidden");
+                    // Änderung 3: Eingabefeld ausblenden
+                    document.getElementById("ziel-bearbeiten-bereich").classList.add("hidden");
                 }
             }
-
+            
             async function saveToFirebase() {
                 try {
                     await set(ref(db, 'coins'), werte);
                     console.log("Daten erfolgreich in Firebase gespeichert.");
                 } catch (error) {
                     console.error("Fehler beim Speichern in Firebase:", error);
+                }
+            }
+
+            async function saveZielToFirebase() {
+                try {
+                    await set(ref(db, 'ziel'), ziel);
+                    console.log("Ziel erfolgreich in Firebase gespeichert.");
+                } catch (error) {
+                    console.error("Fehler beim Speichern des Ziels in Firebase:", error);
                 }
             }
 
@@ -328,6 +362,18 @@
             document.getElementById("nico-minus-button").addEventListener("click", () => update("nico", false));
             document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
             document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
+            
+            // Änderung 3: Event-Listener für den Ziel-Speichern-Knopf
+            document.getElementById("ziel-speichern-button").addEventListener("click", () => {
+                if (!istAdmin) return;
+                const zielInput = document.getElementById('ziel-input');
+                let neuesZiel = Number(zielInput.value);
+                if (!isNaN(neuesZiel) && neuesZiel > 0) {
+                    ziel = neuesZiel;
+                    saveZielToFirebase();
+                    render();
+                }
+            });
 
             // Verwende onValue, um Live-Updates zu erhalten
             onValue(ref(db, 'coins'), (snapshot) => {
@@ -337,6 +383,18 @@
                     console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
                     set(ref(db, 'coins'), { nico: 0, niklas: 0 });
                     werte = { nico: 0, niklas: 0 };
+                }
+                render();
+            });
+            
+            // Änderung 3: Lade das Ziel aus Firebase
+            onValue(ref(db, 'ziel'), (snapshot) => {
+                if (snapshot.exists()) {
+                    ziel = snapshot.val();
+                } else {
+                    console.warn("Ziel-Pfad existiert nicht. Setze Standardziel.");
+                    set(ref(db, 'ziel'), 16000000000);
+                    ziel = 16000000000;
                 }
                 render();
             });
