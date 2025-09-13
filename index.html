@@ -318,6 +318,11 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
+        const ADMINS = {
+            "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
+            "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             let ziel = 16000000000;
             let werte = {
@@ -325,6 +330,7 @@
                 niklas: 0
             };
             let istAdmin = false;
+            let currentAdminName = null;
             
             const loginToggleButton = document.getElementById("login-toggle-button");
             const loginModal = document.getElementById("login-modal");
@@ -447,15 +453,23 @@
                 document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
                 document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} (${formatWithSuffix(ziel)}) Coins`;
 
+                const nicoControls = document.getElementById("nico-controls");
+                const niklasControls = document.getElementById("niklas-controls");
+                const zielControls = document.getElementById("ziel-bearbeiten-bereich");
+
+                nicoControls.classList.add("hidden");
+                niklasControls.classList.add("hidden");
+                zielControls.classList.add("hidden");
+
                 if (istAdmin) {
-                    document.getElementById("nico-controls").classList.remove("hidden");
-                    document.getElementById("niklas-controls").classList.remove("hidden");
-                    document.getElementById("ziel-bearbeiten-bereich").classList.remove("hidden");
                     loginToggleButton.textContent = "Logout";
+                    zielControls.classList.remove("hidden");
+                    if (currentAdminName === "nico") {
+                        nicoControls.classList.remove("hidden");
+                    } else if (currentAdminName === "niklas") {
+                        niklasControls.classList.remove("hidden");
+                    }
                 } else {
-                    document.getElementById("nico-controls").classList.add("hidden");
-                    document.getElementById("niklas-controls").classList.add("hidden");
-                    document.getElementById("ziel-bearbeiten-bereich").classList.add("hidden");
                     loginToggleButton.textContent = "Login";
                 }
             }
@@ -516,11 +530,14 @@
             
             loginButton.addEventListener("click", login);
             
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
+            onAuthStateChanged(auth, async (user) => {
+                if (user && ADMINS[user.uid]) {
                     istAdmin = true;
+                    currentAdminName = ADMINS[user.uid];
+                    console.log(`Eingeloggt als Admin: ${currentAdminName}`);
                 } else {
                     istAdmin = false;
+                    currentAdminName = null;
                 }
                 render();
             });
