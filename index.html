@@ -196,12 +196,22 @@
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
                 <div class="value" id="nico-remaining">Verbleibend: 8.000.000.000</div>
+                <div class="controls hidden" id="nico-controls">
+                    <input type="number" id="nico-input" placeholder="Coins eingeben" />
+                    <button id="nico-add-button">+ Addieren</button>
+                    <button class="minus" id="nico-minus-button">- Abziehen</button>
+                </div>
             </div>
 
             <div id="niklas-section" class="player-section">
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
                 <div class="value" id="niklas-remaining">Verbleibend: 8.000.000.000</div>
+                <div class="controls hidden" id="niklas-controls">
+                    <input type="number" id="niklas-input" placeholder="Coins eingeben" />
+                    <button id="niklas-add-button">+ Addieren</button>
+                    <button class="minus" id="niklas-minus-button">- Abziehen</button>
+                </div>
             </div>
         </div>
     </div>
@@ -209,7 +219,7 @@
     <script type="module">
         // Firebase-Bibliotheken laden
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -234,63 +244,33 @@
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
 
-            // ** Deine API-Konfiguration mit dem temporären Schlüssel **
-            const HYPIXEL_API_KEY = "c671797c-beab-4f10-bd4b-85951a4dfef4";
-            const NICO_UUID = "955e2fc6-ec4a-4174-a86e-f8bb307a52c1";
-            const NIKLAS_UUID = "d06c6087-2551-4a1d-92b0-d7e7ae47955c";
-
-            // ** Profilnamen (werden jetzt zum Debuggen genutzt) **
-            const NICO_PROFILE_NAME = "Lime"; 
-            const NIKLAS_PROFILE_NAME = "Raspberry";
-            
             function formatNumber(n) {
                 return n.toLocaleString('de-DE');
             }
 
-            // Funktion zum Abrufen und Speichern der Coins von einem Spieler
-            async function fetchAndSavePlayerCoins(uuid, playerName, profileName) {
-                try {
-                    const response = await fetch(`https://api.hypixel.net/v2/skyblock/profiles?key=${HYPIXEL_API_KEY}&uuid=${uuid}`);
-                    const data = await response.json();
-                    
-                    console.log(`API Response for ${playerName}:`, data);
+            async function update(name, add) {
+                if (!istAdmin) return;
+                const input = document.getElementById(`${name}-input`);
+                let val = Number(input.value);
+                if (isNaN(val) || val <= 0) return;
 
-                    if (data.success && data.profiles && Object.keys(data.profiles).length > 0) {
-                        
-                        const profileArray = Object.values(data.profiles);
-                        const correctProfile = profileArray.find(profile => profile.members[uuid] && profile.members[uuid].purse !== undefined);
-                        
-                        if (correctProfile) {
-                            const newCoins = correctProfile.members[uuid].purse;
-                            const newWerte = { ...werte, [playerName]: newCoins };
-                            await set(ref(db, 'coins'), newWerte);
-                            console.log(`Daten für ${playerName} erfolgreich in Firebase gespeichert. Profil: ${correctProfile.cute_name}`);
-                        } else {
-                            console.warn(`Konnte keine gültigen Coins für ${playerName} in irgendeinem Profil finden.`);
-                            console.log(`Alle gefundenen Profile für ${playerName}:`, Object.values(data.profiles).map(p => p.cute_name));
-                            
-                            // Letzter Check: Prüfe jedes Profil auf eine 'purse'-Eigenschaft
-                            profileArray.forEach(p => {
-                                const purseData = p.members[uuid] ? p.members[uuid].purse : "Daten fehlen";
-                                console.log(`Debug für ${p.cute_name}:`, purseData);
-                            });
-                        }
-
-                    } else {
-                        console.error("Hypixel API Anfrage war nicht erfolgreich oder keine Profile gefunden.");
-                    }
-                } catch (error) {
-                    console.error("Fehler beim Abrufen der Hypixel API:", error);
+                // Lade die aktuellsten Werte direkt vor dem Speichern, um Konflikte zu vermeiden
+                const snapshot = await get(ref(db, 'coins'));
+                if (snapshot.exists()) {
+                    werte = snapshot.val();
                 }
+
+                if (add) {
+                    werte[name] += val;
+                } else {
+                    werte[name] -= val;
+                    if (werte[name] < 0) werte[name] = 0;
+                }
+
+                input.value = "";
+                await saveToFirebase();
             }
 
-            // Funktion, die beide Spieler aktualisiert
-            async function updateAllPlayersFromApi() {
-                await fetchAndSavePlayerCoins(NICO_UUID, 'nico', NICO_PROFILE_NAME);
-                await fetchAndSavePlayerCoins(NIKLAS_UUID, 'niklas', NIKLAS_PROFILE_NAME);
-            }
-
-            // Aktualisiert die Anzeige auf der Webseite
             function render() {
                 ["nico", "niklas"].forEach(name => {
                     document.getElementById(`${name}-value`).textContent = formatNumber(werte[name]);
@@ -302,51 +282,65 @@
 
                 const totalCoins = werte.nico + werte.niklas;
                 document.getElementById('total-coins').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
+
+                if (istAdmin) {
+                    document.getElementById("nico-controls").classList.remove("hidden");
+                    document.getElementById("niklas-controls").classList.remove("hidden");
+                } else {
+                    document.getElementById("nico-controls").classList.add("hidden");
+                    document.getElementById("niklas-controls").classList.add("hidden");
+                }
             }
 
-            // onValue-Listener für Live-Updates
+            async function saveToFirebase() {
+                try {
+                    await set(ref(db, 'coins'), werte);
+                    console.log("Daten erfolgreich in Firebase gespeichert.");
+                } catch (error) {
+                    console.error("Fehler beim Speichern in Firebase:", error);
+                }
+            }
+
+            function login() {
+                const pw = document.getElementById("password").value;
+                if (pw === ADMIN_PASSWORT) {
+                    istAdmin = true;
+                    document.getElementById("feedback").textContent = "Erfolgreich als Admin eingeloggt!";
+                    document.getElementById("feedback").style.color = "#00ff99";
+                } else {
+                    istAdmin = false;
+                    document.getElementById("feedback").textContent = "Falsches Passwort!";
+                    document.getElementById("feedback").style.color = "#ff6666";
+                }
+                render();
+            }
+
+            function logout() {
+                istAdmin = false;
+                document.getElementById("feedback").textContent = "Als Gast eingeloggt";
+                document.getElementById("feedback").style.color = "#ffecb3";
+                render();
+            }
+
+            document.getElementById("login-button").addEventListener("click", login);
+            document.getElementById("logout-button").addEventListener("click", logout);
+            document.getElementById("nico-add-button").addEventListener("click", () => update("nico", true));
+            document.getElementById("nico-minus-button").addEventListener("click", () => update("nico", false));
+            document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
+            document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
+
+            // Verwende onValue, um Live-Updates zu erhalten
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
                     werte = snapshot.val();
                 } else {
-                        console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
-                        set(ref(db, 'coins'), { nico: 0, niklas: 0 });
-                        werte = { nico: 0, niklas: 0 };
-                    }
-                    render();
-                });
-    
-                // Admin-Login-Funktionen
-                function login() {
-                    const pw = document.getElementById("password").value;
-                    if (pw === ADMIN_PASSWORT) {
-                        istAdmin = true;
-                        document.getElementById("feedback").textContent = "Erfolgreich als Admin eingeloggt!";
-                        document.getElementById("feedback").style.color = "#00ff99";
-                    } else {
-                        istAdmin = false;
-                        document.getElementById("feedback").textContent = "Falsches Passwort!";
-                        document.getElementById("feedback").style.color = "#ff6666";
-                    }
-                    render();
+                    console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
+                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
+                    werte = { nico: 0, niklas: 0 };
                 }
-
-                function logout() {
-                    istAdmin = false;
-                    document.getElementById("feedback").textContent = "Als Gast eingeloggt";
-                    document.getElementById("feedback").style.color = "#ffecb3";
-                    render();
-                }
-
-                document.getElementById("login-button").addEventListener("click", login);
-                document.getElementById("logout-button").addEventListener("click", logout);
-
-                // Automatische Aktualisierung alle 60 Sekunden
-                setInterval(updateAllPlayersFromApi, 60000);
-
-                // Führe die erste Aktualisierung direkt beim Laden aus
-                updateAllPlayersFromApi();
+                render();
             });
+        });
     </script>
 </body>
 </html>
