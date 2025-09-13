@@ -156,12 +156,18 @@
             font-size: 10px;
         }
         
+        #email-input {
+            width: 250px;
+            margin-right: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
         .login-controls {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
             gap: 8px;
         }
 
@@ -241,6 +247,8 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <div id="login-area" class="login-controls">
+                <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
                 <input type="password" id="password" placeholder="Admin Passwort" />
                 <button id="login-button">Login</button>
                 <div id="feedback"></div>
@@ -249,7 +257,7 @@
     </div>
     
     <div class="card">
-        <h1 id="ziel-anzeige">Ziel: 16.000.000.000 Coins</h1>
+        <h1>Ziel: 16.000.000.000 Coins</h1>
         <div id="ziel-bearbeiten-bereich" class="hidden">
             <input type="text" id="ziel-input" placeholder="Neues Ziel setzen (z.B. 10m)" />
             <button id="ziel-speichern-button">Ziel speichern</button>
@@ -262,6 +270,7 @@
             <div id="nico-section" class="player-section">
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
+                <div class="value" id="nico-remaining">Verbleibend: 8.000.000.000</div>
                 <div class="controls hidden" id="nico-controls">
                     <input type="number" id="nico-input" placeholder="Coins eingeben" />
                     <select id="nico-action-select">
@@ -276,6 +285,7 @@
             <div id="niklas-section" class="player-section">
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
+                <div class="value" id="niklas-remaining">Verbleibend: 8.000.000.000</div>
                 <div class="controls hidden" id="niklas-controls">
                     <input type="number" id="niklas-input" placeholder="Coins eingeben" />
                     <select id="niklas-action-select">
@@ -292,6 +302,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
@@ -305,6 +316,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
 
         document.addEventListener('DOMContentLoaded', () => {
             let ziel = 16000000000;
@@ -312,27 +324,31 @@
                 nico: 0,
                 niklas: 0
             };
-            let adminPasswort = null;
             let istAdmin = false;
             
             const loginToggleButton = document.getElementById("login-toggle-button");
             const loginModal = document.getElementById("login-modal");
             const closeButton = document.querySelector(".modal .close-button");
+            const emailInput = document.getElementById("email-input");
             const passwordInput = document.getElementById("password");
             const loginButton = document.getElementById("login-button");
             const feedbackElement = document.getElementById("feedback");
-
+            
             loginToggleButton.addEventListener("click", () => {
                 if (istAdmin) {
                     logout();
                 } else {
                     loginModal.classList.remove("hidden");
+                    feedbackElement.textContent = "";
+                    emailInput.value = "";
+                    passwordInput.value = "";
                 }
             });
 
             closeButton.addEventListener("click", () => {
                 loginModal.classList.add("hidden");
                 feedbackElement.textContent = "";
+                emailInput.value = "";
                 passwordInput.value = "";
             });
             
@@ -340,6 +356,7 @@
                 if (event.target === loginModal) {
                     loginModal.classList.add("hidden");
                     feedbackElement.textContent = "";
+                    emailInput.value = "";
                     passwordInput.value = "";
                 }
             });
@@ -386,8 +403,8 @@
                 let val = Number(input.value);
 
                 if (isNaN(val) || val < 0) {
-                    document.getElementById("feedback").textContent = "Ungültige Eingabe!";
-                    document.getElementById("feedback").style.color = "#ff6666";
+                    feedbackElement.textContent = "Ungültige Eingabe!";
+                    feedbackElement.style.color = "#ff6666";
                     return;
                 }
                 
@@ -412,7 +429,13 @@
             function render() {
                 ["nico", "niklas"].forEach(name => {
                     document.getElementById(`${name}-value`).textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
+                    let totalCoins = werte.nico + werte.niklas;
+                    let remaining = ziel - werte[name];
+                    if (remaining < 0) remaining = 0;
+                    document.getElementById(`${name}-remaining`).textContent =
+                        "Verbleibend: " + formatNumber(remaining);
                 });
+
                 const totalCoins = werte.nico + werte.niklas;
                 const coinsVerbleibend = ziel - totalCoins;
                 
@@ -440,6 +463,8 @@
                     console.log("Daten erfolgreich in Firebase gespeichert.");
                 } catch (error) {
                     console.error("Fehler beim Speichern in Firebase:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
+                    feedbackElement.style.color = "#ff6666";
                 }
             }
 
@@ -449,36 +474,54 @@
                     console.log("Ziel erfolgreich in Firebase gespeichert.");
                 } catch (error) {
                     console.error("Fehler beim Speichern des Ziels in Firebase:", error);
-                }
-            }
-
-            function login() {
-                const pw = passwordInput.value;
-                if (pw === adminPasswort) {
-                    istAdmin = true;
-                    feedbackElement.textContent = "Erfolgreich als Admin eingeloggt!";
-                    feedbackElement.style.color = "#00ff99";
-                    setTimeout(() => {
-                        loginModal.classList.add("hidden");
-                        passwordInput.value = "";
-                        feedbackElement.textContent = "";
-                    }, 1500);
-                } else {
-                    istAdmin = false;
-                    feedbackElement.textContent = "Falsches Passwort!";
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
                     feedbackElement.style.color = "#ff6666";
                 }
-                render();
+            }
+            
+            function login() {
+                const email = emailInput.value;
+                const pw = passwordInput.value;
+                
+                signInWithEmailAndPassword(auth, email, pw)
+                    .then(() => {
+                        feedbackElement.textContent = "Erfolgreich eingeloggt!";
+                        feedbackElement.style.color = "#00ff99";
+                        setTimeout(() => {
+                            feedbackElement.textContent = "";
+                        }, 1500);
+                        loginModal.classList.add("hidden");
+                    })
+                    .catch((error) => {
+                        feedbackElement.textContent = "Login fehlgeschlagen!";
+                        feedbackElement.style.color = "#ff6666";
+                        console.error("Login-Fehler:", error.message);
+                    });
             }
 
             function logout() {
-                istAdmin = false;
-                feedbackElement.textContent = "Als Gast eingeloggt";
-                feedbackElement.style.color = "#ffecb3";
-                render();
+                signOut(auth).then(() => {
+                    feedbackElement.textContent = "Erfolgreich abgemeldet!";
+                    feedbackElement.style.color = "#ffecb3";
+                    setTimeout(() => {
+                        feedbackElement.textContent = "";
+                    }, 1500);
+                }).catch((error) => {
+                    console.error("Logout-Fehler:", error.message);
+                });
             }
-
+            
             loginButton.addEventListener("click", login);
+            
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    istAdmin = true;
+                } else {
+                    istAdmin = false;
+                }
+                render();
+            });
+
             document.getElementById("nico-update-button").addEventListener("click", () => update("nico"));
             document.getElementById("niklas-update-button").addEventListener("click", () => update("niklas"));
             
@@ -489,10 +532,9 @@
                 if (!isNaN(neuesZiel) && neuesZiel > 0) {
                     ziel = neuesZiel;
                     saveZielToFirebase();
-                    render();
                 } else {
-                    document.getElementById("feedback").textContent = "Ungültige Zieleingabe!";
-                    document.getElementById("feedback").style.color = "#ff6666";
+                    feedbackElement.textContent = "Ungültige Zieleingabe!";
+                    feedbackElement.style.color = "#ff6666";
                 }
             });
 
@@ -516,15 +558,6 @@
                     ziel = 16000000000;
                 }
                 render();
-            });
-
-            onValue(ref(db, 'adminPasswort'), (snapshot) => {
-                if (snapshot.exists()) {
-                    adminPasswort = snapshot.val();
-                    console.log("Admin-Passwort aus Firebase geladen.");
-                } else {
-                    console.warn("Admin-Passwort-Pfad existiert nicht. Bitte setzen Sie ein Passwort in der Firebase-Konsole unter /adminPasswort.");
-                }
             });
         });
     </script>
