@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hypixel SkyBlock Ziel-Counter</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -20,7 +21,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
-
+        
         #login-toggle-button {
             position: fixed;
             top: 20px;
@@ -68,7 +69,7 @@
             color: #fff;
             text-decoration: none;
         }
-        
+
         .card {
             position: relative;
             z-index: 1;
@@ -156,14 +157,6 @@
             font-size: 10px;
         }
         
-        #email-input {
-            width: 250px;
-            margin-right: 8px;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 10px;
-        }
-
         .login-controls {
             display: flex;
             flex-direction: column;
@@ -237,6 +230,34 @@
             flex-direction: row;
             justify-content: center;
         }
+
+        /* Responsive Design für kleinere Bildschirme */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .player-sections-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .total-coins {
+                font-size: 18px;
+            }
+            
+            #login-toggle-button {
+                top: 10px;
+            }
+        }
     </style>
 </head>
 
@@ -248,7 +269,6 @@
             <span class="close-button">&times;</span>
             <div id="login-area" class="login-controls">
                 <h2>Admin Login</h2>
-                <input type="email" id="email-input" placeholder="Admin E-Mail" />
                 <input type="password" id="password" placeholder="Admin Passwort" />
                 <button id="login-button">Login</button>
                 <div id="feedback"></div>
@@ -335,7 +355,6 @@
             const loginToggleButton = document.getElementById("login-toggle-button");
             const loginModal = document.getElementById("login-modal");
             const closeButton = document.querySelector(".modal .close-button");
-            const emailInput = document.getElementById("email-input");
             const passwordInput = document.getElementById("password");
             const loginButton = document.getElementById("login-button");
             const feedbackElement = document.getElementById("feedback");
@@ -352,7 +371,6 @@
                 } else {
                     loginModal.classList.remove("hidden");
                     feedbackElement.textContent = "";
-                    emailInput.value = "";
                     passwordInput.value = "";
                 }
             });
@@ -360,7 +378,6 @@
             closeButton.addEventListener("click", () => {
                 loginModal.classList.add("hidden");
                 feedbackElement.textContent = "";
-                emailInput.value = "";
                 passwordInput.value = "";
             });
             
@@ -368,7 +385,6 @@
                 if (event.target === loginModal) {
                     loginModal.classList.add("hidden");
                     feedbackElement.textContent = "";
-                    emailInput.value = "";
                     passwordInput.value = "";
                 }
             });
@@ -492,7 +508,7 @@
             }
             
             function login() {
-                const email = emailInput.value;
+                const email = "nico@skyblock-coop.com";
                 const pw = passwordInput.value;
                 
                 signInWithEmailAndPassword(auth, email, pw)
