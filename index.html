@@ -420,22 +420,28 @@
                     return;
                 }
                 
-                const snapshot = await get(ref(db, 'coins'));
-                if (snapshot.exists()) {
-                    werte = snapshot.val();
-                }
+                const snapshot = await get(ref(db, `coins/${name}`));
+                let currentValue = snapshot.exists() ? snapshot.val() : 0;
 
                 if (action === 'add') {
-                    werte[name] += val;
+                    currentValue += val;
                 } else if (action === 'remove') {
-                    werte[name] -= val;
-                    if (werte[name] < 0) werte[name] = 0;
+                    currentValue -= val;
+                    if (currentValue < 0) currentValue = 0;
                 } else if (action === 'set') {
-                    werte[name] = val;
+                    currentValue = val;
                 }
 
                 input.value = "";
-                await saveToFirebase();
+                
+                try {
+                    await set(ref(db, `coins/${name}`), currentValue);
+                    console.log(`Daten für ${name} erfolgreich in Firebase gespeichert.`);
+                } catch (error) {
+                    console.error("Fehler beim Speichern in Firebase:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
+                    feedbackElement.style.color = "#ff6666";
+                }
             }
 
             function render() {
@@ -471,17 +477,6 @@
                     }
                 } else {
                     loginToggleButton.textContent = "Login";
-                }
-            }
-
-            async function saveToFirebase() {
-                try {
-                    await set(ref(db, 'coins'), werte);
-                    console.log("Daten erfolgreich in Firebase gespeichert.");
-                } catch (error) {
-                    console.error("Fehler beim Speichern in Firebase:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
-                    feedbackElement.style.color = "#ff6666";
                 }
             }
 
