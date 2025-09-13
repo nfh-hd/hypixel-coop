@@ -196,7 +196,7 @@
     <div class="card">
         <h1 id="ziel-anzeige">Ziel: 16.000.000.000 Coins</h1>
         <div id="ziel-bearbeiten-bereich" class="hidden">
-            <input type="number" id="ziel-input" placeholder="Neues Ziel setzen" />
+            <input type="text" id="ziel-input" placeholder="Neues Ziel setzen (z.B. 10m)" />
             <button id="ziel-speichern-button">Ziel speichern</button>
         </div>
         
@@ -259,8 +259,9 @@
             const ADMIN_PASSWORT = "SBCS666";
             let istAdmin = false;
 
-            // Neue Funktion: Zahlen mit Suffixen formatieren
+            // Funktion: Zahlen mit Suffixen formatieren
             function formatWithSuffix(n) {
+                if (n === null || n === undefined) return '0';
                 if (n < 1000) {
                     return n.toLocaleString('de-DE');
                 }
@@ -271,9 +272,28 @@
                 return `${rounded}${suffix}`;
             }
 
-            // Bestehende Funktion: Zahlen normal formatieren
+            // Funktion: Zahlen normal formatieren
             function formatNumber(n) {
+                if (n === null || n === undefined) return '0';
                 return n.toLocaleString('de-DE');
+            }
+
+            // Neue Funktion: Eingabe mit Suffix in eine Zahl umwandeln
+            function parseWithSuffix(input) {
+                const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
+                const suffixes = {
+                    'k': 1000,
+                    'm': 1000000,
+                    'b': 1000000000,
+                    't': 1000000000000
+                };
+                const suffix = cleanedInput.slice(-1);
+                const value = parseFloat(cleanedInput);
+                
+                if (suffixes[suffix]) {
+                    return value * suffixes[suffix];
+                }
+                return value;
             }
 
             async function update(name, add) {
@@ -299,14 +319,14 @@
             }
 
             function render() {
+                // Suffixe auch bei den individuellen Coins hinzufügen
                 ["nico", "niklas"].forEach(name => {
-                    document.getElementById(`${name}-value`).textContent = formatNumber(werte[name]);
+                    document.getElementById(`${name}-value`).textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
                 });
 
                 const totalCoins = werte.nico + werte.niklas;
                 const coinsVerbleibend = ziel - totalCoins;
                 
-                // Anzeige mit gerundetem Suffix hinzufügen
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
                 document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
                 document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} (${formatWithSuffix(ziel)}) Coins`;
@@ -368,14 +388,19 @@
             document.getElementById("niklas-add-button").addEventListener("click", () => update("niklas", true));
             document.getElementById("niklas-minus-button").addEventListener("click", () => update("niklas", false));
             
+            // Logik für den Ziel-Speichern-Knopf
             document.getElementById("ziel-speichern-button").addEventListener("click", () => {
                 if (!istAdmin) return;
                 const zielInput = document.getElementById('ziel-input');
-                let neuesZiel = Number(zielInput.value);
+                // parseWithSuffix-Funktion nutzen, um die Eingabe zu verarbeiten
+                let neuesZiel = parseWithSuffix(zielInput.value);
                 if (!isNaN(neuesZiel) && neuesZiel > 0) {
                     ziel = neuesZiel;
                     saveZielToFirebase();
                     render();
+                } else {
+                    document.getElementById("feedback").textContent = "Ungültige Zieleingabe!";
+                    document.getElementById("feedback").style.color = "#ff6666";
                 }
             });
 
