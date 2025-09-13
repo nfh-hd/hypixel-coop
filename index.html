@@ -237,15 +237,19 @@
     </div>
     
     <div class="card">
-        <h1>Ziel: 16.000.000.000 Coins</h1>
+        <h1 id="ziel-anzeige">Ziel: 16.000.000.000 Coins</h1>
+        <div id="ziel-bearbeiten-bereich" class="hidden">
+            <input type="text" id="ziel-input" placeholder="Neues Ziel setzen (z.B. 10m)" />
+            <button id="ziel-speichern-button">Ziel speichern</button>
+        </div>
 
-        <div class="total-coins" id="total-coins">Coins Insgesamt: 0</div>
+        <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
+        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
 
         <div class="player-sections-container">
             <div id="nico-section" class="player-section">
                 <h2>🪙 Nico</h2>
                 <div class="remaining" id="nico-value">0</div>
-                <div class="value" id="nico-remaining">Verbleibend: 8.000.000.000</div>
                 <div class="controls hidden" id="nico-controls">
                     <input type="number" id="nico-input" placeholder="Coins eingeben" />
                     <select id="nico-action-select">
@@ -260,7 +264,6 @@
             <div id="niklas-section" class="player-section">
                 <h2>🪙 Niklas</h2>
                 <div class="remaining" id="niklas-value">0</div>
-                <div class="value" id="niklas-remaining">Verbleibend: 8.000.000.000</div>
                 <div class="controls hidden" id="niklas-controls">
                     <input type="number" id="niklas-input" placeholder="Coins eingeben" />
                     <select id="niklas-action-select">
@@ -292,7 +295,7 @@
         const db = getDatabase(app);
 
         document.addEventListener('DOMContentLoaded', () => {
-            const ziel = 8000000000;
+            let ziel = 16000000000;
             let werte = {
                 nico: 0,
                 niklas: 0
@@ -330,7 +333,37 @@
             });
 
             function formatNumber(n) {
+                if (n === null || n === undefined) return '0';
                 return n.toLocaleString('de-DE');
+            }
+
+            function formatWithSuffix(n) {
+                if (n === null || n === undefined) return '0';
+                if (n < 1000) {
+                    return n.toLocaleString('de-DE');
+                }
+                const suffixes = ["", "k", "m", "b", "t", "q"];
+                const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
+                const suffix = suffixes[tier];
+                const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
+                return `${rounded}${suffix}`;
+            }
+
+            function parseWithSuffix(input) {
+                const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
+                const suffixes = {
+                    'k': 1000,
+                    'm': 1000000,
+                    'b': 1000000000,
+                    't': 1000000000000
+                };
+                const suffix = cleanedInput.slice(-1);
+                const value = parseFloat(cleanedInput);
+                
+                if (suffixes[suffix]) {
+                    return value * suffixes[suffix];
+                }
+                return value;
             }
 
             async function update(name) {
@@ -366,24 +399,25 @@
 
             function render() {
                 ["nico", "niklas"].forEach(name => {
-                    document.getElementById(`${name}-value`).textContent = formatNumber(werte[name]);
-                    let remaining = ziel - werte[name];
-                    if (remaining < 0) remaining = 0;
-                    document.getElementById(`${name}-remaining`).textContent =
-                        "Verbleibend: " + formatNumber(remaining);
+                    document.getElementById(`${name}-value`).textContent = `${formatNumber(werte[name])} (${formatWithSuffix(werte[name])})`;
                 });
-
                 const totalCoins = werte.nico + werte.niklas;
-                document.getElementById('total-coins').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)}`;
+                const coinsVerbleibend = ziel - totalCoins;
+                
+                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
+                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
+                document.getElementById('ziel-anzeige').textContent = `Ziel: ${formatNumber(ziel)} (${formatWithSuffix(ziel)}) Coins`;
 
                 if (istAdmin) {
                     document.getElementById("nico-controls").classList.remove("hidden");
                     document.getElementById("niklas-controls").classList.remove("hidden");
+                    document.getElementById("ziel-bearbeiten-bereich").classList.remove("hidden");
                     loginToggleButton.textContent = "Logout";
                     loginModal.classList.add("hidden");
                 } else {
                     document.getElementById("nico-controls").classList.add("hidden");
                     document.getElementById("niklas-controls").classList.add("hidden");
+                    document.getElementById("ziel-bearbeiten-bereich").classList.add("hidden");
                     loginToggleButton.textContent = "Login";
                 }
             }
@@ -394,6 +428,15 @@
                     console.log("Daten erfolgreich in Firebase gespeichert.");
                 } catch (error) {
                     console.error("Fehler beim Speichern in Firebase:", error);
+                }
+            }
+
+            async function saveZielToFirebase() {
+                try {
+                    await set(ref(db, 'ziel'), ziel);
+                    console.log("Ziel erfolgreich in Firebase gespeichert.");
+                } catch (error) {
+                    console.error("Fehler beim Speichern des Ziels in Firebase:", error);
                 }
             }
 
@@ -426,6 +469,20 @@
             loginButton.addEventListener("click", login);
             document.getElementById("nico-update-button").addEventListener("click", () => update("nico"));
             document.getElementById("niklas-update-button").addEventListener("click", () => update("niklas"));
+            
+            document.getElementById("ziel-speichern-button").addEventListener("click", () => {
+                if (!istAdmin) return;
+                const zielInput = document.getElementById('ziel-input');
+                let neuesZiel = parseWithSuffix(zielInput.value);
+                if (!isNaN(neuesZiel) && neuesZiel > 0) {
+                    ziel = neuesZiel;
+                    saveZielToFirebase();
+                    render();
+                } else {
+                    document.getElementById("feedback").textContent = "Ungültige Zieleingabe!";
+                    document.getElementById("feedback").style.color = "#ff6666";
+                }
+            });
 
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
@@ -434,6 +491,17 @@
                     console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
                     set(ref(db, 'coins'), { nico: 0, niklas: 0 });
                     werte = { nico: 0, niklas: 0 };
+                }
+                render();
+            });
+            
+            onValue(ref(db, 'ziel'), (snapshot) => {
+                if (snapshot.exists()) {
+                    ziel = snapshot.val();
+                } else {
+                    console.warn("Ziel-Pfad existiert nicht. Setze Standardziel.");
+                    set(ref(db, 'ziel'), 16000000000);
+                    ziel = 16000000000;
                 }
                 render();
             });
