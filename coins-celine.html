@@ -295,14 +295,7 @@
     </div>
     
     <div class="card">
-        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
-        <div id="ziel-bearbeiten-bereich" class="hidden">
-            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-            <button id="ziel-speichern-button">Ziel festlegen</button>
-        </div>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
-        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
-
         <div class="player-sections-container">
             <div id="celine-section" class="player-section">
                 <h2>🪙 Celine</h2>
@@ -316,36 +309,6 @@
                         <option value="set">Setzen</option>
                     </select>
                     <button id="celine-update-button">Ausführen</button>
-                </div>
-            </div>
-
-            <div id="niklas-section" class="player-section">
-                <h2>🪙 Niklas</h2>
-                <div class="remaining" id="niklas-value">0</div>
-                <div class="value" id="niklas-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="niklas-controls">
-                    <input type="text" id="niklas-input" placeholder="Coins eingeben" />
-                    <select id="niklas-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="niklas-update-button">Ausführen</button>
-                </div>
-            </div>
-
-            <div id="nico-section" class="player-section">
-                <h2>🪙 Nico</h2>
-                <div class="remaining" id="nico-value">0</div>
-                <div class="value" id="nico-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="nico-controls">
-                    <input type="text" id="nico-input" placeholder="Coins eingeben" />
-                    <select id="nico-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="nico-update-button">Ausführen</button>
                 </div>
             </div>
         </div>
@@ -378,14 +341,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             let werte = {
-                celine: 0,
-                niklas: 0,
-                nico: 0
-            };
-            let individuelleZiele = {
-                celine: 0,
-                niklas: 0,
-                nico: 0
+                celine: 0
             };
             let istAdmin = false;
             let istCeline = false;
@@ -471,28 +427,6 @@
                 return value;
             }
             
-            function updateZiel() {
-                if (!istCeline) return;
-                const input = document.getElementById(`ziel-input`);
-                let neuesZiel = parseWithSuffix(input.value);
-
-                if (isNaN(neuesZiel) || neuesZiel < 0) {
-                    feedbackElement.textContent = "Ungültige Zieleingabe!";
-                    feedbackElement.style.color = "#ff6666";
-                    return;
-                }
-
-                input.value = "";
-                try {
-                    set(ref(db, `individual_ziels/celine`), neuesZiel);
-                    console.log(`Ziel für Celine erfolgreich gespeichert.`);
-                } catch (error) {
-                    console.error("Fehler beim Speichern des Ziels:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
-                    feedbackElement.style.color = "#ff6666";
-                }
-            }
-
             async function updateCoins(name) {
                 if (!istCeline) return;
                 const input = document.getElementById(`${name}-input`);
@@ -531,40 +465,20 @@
             }
 
             function render() {
-                const totalZiel = (individuelleZiele.celine || 0) + (individuelleZiele.niklas || 0) + (individuelleZiele.nico || 0);
-                const totalCoins = (werte.celine || 0) + (werte.niklas || 0) + (werte.nico || 0);
-
-                document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
+                const totalCoins = (werte.celine || 0);
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
                 
-                const coinsVerbleibend = totalZiel - totalCoins;
-                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
-
-                ["celine", "niklas", "nico"].forEach(name => {
+                ["celine"].forEach(name => {
                     const valueElement = document.getElementById(`${name}-value`);
-                    const remainingElement = document.getElementById(`${name}-remaining`);
-                    
                     valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
-                    
-                    let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
-                    if (remaining < 0) remaining = 0;
-                    remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
                 });
 
                 const celineControls = document.getElementById("celine-controls");
-                const niklasControls = document.getElementById("niklas-controls");
-                const nicoControls = document.getElementById("nico-controls");
-                const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
-
                 celineControls.classList.add("hidden");
-                niklasControls.classList.add("hidden");
-                nicoControls.classList.add("hidden");
-                zielBearbeitenBereich.classList.add("hidden");
 
                 if (istAdmin) {
                     loginToggleButton.textContent = "Logout";
                     if (istCeline) {
-                        zielBearbeitenBereich.classList.remove("hidden");
                         celineControls.classList.remove("hidden");
                     }
                 } else {
@@ -621,26 +535,13 @@
             });
 
             document.getElementById("celine-update-button").addEventListener("click", () => updateCoins("celine"));
-            document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
-            document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
-            document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
 
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
                     werte = snapshot.val();
                 } else {
-                    set(ref(db, 'coins'), { celine: 0, niklas: 0, nico: 0 });
-                    werte = { celine: 0, niklas: 0, nico: 0 };
-                }
-                render();
-            });
-            
-            onValue(ref(db, 'individual_ziels'), (snapshot) => {
-                if (snapshot.exists()) {
-                    individuelleZiele = snapshot.val();
-                } else {
-                    set(ref(db, 'individual_ziels'), { celine: 0, niklas: 0, nico: 0 });
-                    individuelleZiele = { celine: 0, niklas: 0, nico: 0 };
+                    set(ref(db, 'coins'), { celine: 0 });
+                    werte = { celine: 0 };
                 }
                 render();
             });
