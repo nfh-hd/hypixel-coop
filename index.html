@@ -226,6 +226,7 @@
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getDatabase(app);
         
         // Mapping von Firebase UID zu Spielernamen
         const ADMINS = {
@@ -258,9 +259,14 @@
         // Event-Listener für den Login-Knopf
         loginToggleButton.addEventListener("click", () => {
             if (istAdmin) {
+                // Logout-Logik
                 signOut(auth);
             } else {
+                // Login-Logik
                 loginModal.style.display = 'flex';
+                feedbackLogin.textContent = "";
+                emailInput.value = "";
+                passwordInput.value = "";
             }
         });
 
@@ -290,7 +296,8 @@
                     console.error("Login-Fehler:", error.message);
                 });
         });
-
+        
+        // Firebase Auth State Listener, der den Zustand der Seite bei jedem Login-Status-Wechsel aktualisiert
         onAuthStateChanged(auth, (user) => {
             istAdmin = !!(user && ADMINS[user.uid]);
             if (istAdmin) {
