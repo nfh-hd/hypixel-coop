@@ -295,19 +295,29 @@
     </div>
     
     <div class="card">
-        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
-        <div id="ziel-bearbeiten-bereich" class="hidden">
-            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-            <button id="ziel-speichern-button">Ziel festlegen</button>
-        </div>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
-        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
+        <div class="player-sections-container">
+            <div id="celine-section" class="player-section">
+                <h2>🪙 Celine</h2>
+                <div class="remaining" id="celine-value">0</div>
+                <div class="value" id="celine-remaining">Verbleibend: 0</div>
+                <div class="controls hidden" id="celine-controls">
+                    <input type="text" id="celine-input" placeholder="Coins eingeben" />
+                    <select id="celine-action-select">
+                        <option value="add">Hinzufügen</option>
+                        <option value="remove">Entfernen</option>
+                        <option value="set">Setzen</option>
+                    </select>
+                    <button id="celine-update-button">Ausführen</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
@@ -330,8 +340,9 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            let totalCoins = 0;
-            let totalZiel = 0;
+            let werte = {
+                celine: 0
+            };
             let istAdmin = false;
             let istCeline = false;
             let currentAdminName = null;
@@ -344,7 +355,6 @@
             const loginButton = document.getElementById("login-button");
             const feedbackElement = document.getElementById("feedback");
             const dashboardButton = document.getElementById("dashboard-button");
-            const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
             
             const modalContent = document.querySelector(".modal-content");
 
@@ -416,53 +426,71 @@
                 }
                 return value;
             }
-
-            function render() {
-                document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
-                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
-                
-                const coinsVerbleibend = totalZiel - totalCoins;
-                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
-
-                if (istAdmin) {
-                    loginToggleButton.textContent = "Logout";
-                    zielBearbeitenBereich.classList.remove("hidden");
-                } else {
-                    loginToggleButton.textContent = "Login";
-                    zielBearbeitenBereich.classList.add("hidden");
-                }
-            }
             
-            function updateZiel() {
+            async function updateCoins(name) {
                 if (!istCeline) return;
-                const input = document.getElementById(`ziel-input`);
-                let neuesZiel = parseWithSuffix(input.value);
+                const input = document.getElementById(`${name}-input`);
+                const actionSelect = document.getElementById(`${name}-action-select`);
+                const action = actionSelect.value;
+                let val = parseWithSuffix(input.value);
 
-                if (isNaN(neuesZiel) || neuesZiel < 0) {
-                    feedbackElement.textContent = "Ungültige Zieleingabe!";
+                if (isNaN(val) || val < 0) {
+                    feedbackElement.textContent = "Ungültige Eingabe!";
                     feedbackElement.style.color = "#ff6666";
                     return;
                 }
+                
+                const snapshot = await get(ref(db, `coins/${name}`));
+                let currentValue = snapshot.exists() ? snapshot.val() : 0;
+
+                if (action === 'add') {
+                    currentValue += val;
+                } else if (action === 'remove') {
+                    currentValue -= val;
+                    if (currentValue < 0) currentValue = 0;
+                } else if (action === 'set') {
+                    currentValue = val;
+                }
 
                 input.value = "";
+                
                 try {
-                    set(ref(db, `ziel/celine`), neuesZiel);
-                    console.log(`Ziel für Celine erfolgreich gespeichert.`);
+                    await set(ref(db, `coins/${name}`), currentValue);
+                    console.log(`Daten für ${name} erfolgreich in Firebase gespeichert.`);
                 } catch (error) {
-                    console.error("Fehler beim Speichern des Ziels:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
+                    console.error("Fehler beim Speichern in Firebase:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
                     feedbackElement.style.color = "#ff6666";
                 }
             }
+
+            function render() {
+                const totalCoins = (werte.celine || 0);
+                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
+                
+                ["celine"].forEach(name => {
+                    const valueElement = document.getElementById(`${name}-value`);
+                    valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
+                });
+
+                const celineControls = document.getElementById("celine-controls");
+                celineControls.classList.add("hidden");
+
+                if (istAdmin) {
+                    loginToggleButton.textContent = "Logout";
+                    if (istCeline) {
+                        celineControls.classList.remove("hidden");
+                    }
+                } else {
+                    loginToggleButton.textContent = "Login";
+                }
+            }
             
-            loginButton.addEventListener("click", () => {
+            function login() {
                 const email = emailInput.value;
                 const pw = passwordInput.value;
                 
-                setPersistence(auth, browserLocalPersistence)
-                    .then(() => {
-                        return signInWithEmailAndPassword(auth, email, pw);
-                    })
+                signInWithEmailAndPassword(auth, email, pw)
                     .then(() => {
                         feedbackElement.textContent = "Erfolgreich eingeloggt!";
                         feedbackElement.style.color = "#00ff99";
@@ -476,7 +504,7 @@
                         feedbackElement.style.color = "#ff6666";
                         console.error("Login-Fehler:", error.message);
                     });
-            });
+            }
 
             function logout() {
                 signOut(auth).then(() => {
@@ -489,6 +517,8 @@
                     console.error("Logout-Fehler:", error.message);
                 });
             }
+            
+            loginButton.addEventListener("click", login);
             
             onAuthStateChanged(auth, async (user) => {
                 if (user && ADMINS[user.uid]) {
@@ -504,29 +534,14 @@
                 render();
             });
 
-            document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
+            document.getElementById("celine-update-button").addEventListener("click", () => updateCoins("celine"));
 
-            onValue(ref(db, 'items/celine'), (snapshot) => {
+            onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
-                    totalCoins = 0;
-                    const items = snapshot.val();
-                    for (const itemId in items) {
-                        const item = items[itemId];
-                        if (item.preis && item.quantity) {
-                            totalCoins += item.preis * item.quantity;
-                        }
-                    }
+                    werte = snapshot.val();
                 } else {
-                    totalCoins = 0;
-                }
-                render();
-            });
-
-            onValue(ref(db, 'ziel/celine'), (snapshot) => {
-                if (snapshot.exists()) {
-                    totalZiel = snapshot.val();
-                } else {
-                    totalZiel = 0;
+                    set(ref(db, 'coins'), { celine: 0 });
+                    werte = { celine: 0 };
                 }
                 render();
             });
