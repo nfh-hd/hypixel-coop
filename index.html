@@ -48,43 +48,6 @@
             gap: 20px;
         }
 
-        h1 {
-            margin-bottom: 10px;
-            color: #ffd700;
-            text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
-            font-size: 25px;
-        }
-        
-        h2 {
-            margin: 20px 0 5px;
-            color: #ffcc33;
-            text-shadow: 0 0 6px #ffaa00;
-            font-size: 18px;
-        }
-
-        .total-coins {
-            font-size: 22px;
-            font-weight: bold;
-            color: #00ff99;
-            text-shadow: 0 0 8px #00ff99;
-            margin-top: 15px;
-            margin-bottom: 30px;
-        }
-
-        .value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ffffff;
-            text-shadow: 0 0 4px #ffd700;
-            margin-top: 2px;
-        }
-        
-        .remaining {
-            font-size: 20px;
-            color: #ffecb3;
-            margin-top: 10px;
-        }
-
         button {
             padding: 10px 14px;
             border-radius: 6px;
@@ -114,7 +77,6 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
             justify-content: center;
             align-items: center;
         }
@@ -144,94 +106,29 @@
             color: #fff;
             text-decoration: none;
         }
-
-        #login-toggle-button, #back-button {
+        
+        #login-toggle-button {
             position: fixed;
             top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 100;
         }
 
-        #login-toggle-button {
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #back-button {
-            left: 20px;
-        }
-
-        .main-button-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .main-button-container button {
-            padding: 20px 40px;
-            font-size: 16px;
-            border-radius: 10px;
-        }
-
-        .player-sections-container {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-
-        .player-section {
-            flex: 1;
-            min-width: 280px;
-            background: rgba(30, 30, 30, 0.8);
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #ffcc33;
-            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
-        }
-
-        .player-section .controls {
-            flex-direction: row;
-            justify-content: center;
-            margin-top: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .controls input {
-            padding: 10px;
-            border-radius: 6px;
-            border: 2px solid #ffd700;
-            background: #1c1c1c;
-            color: #e6eef8;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            width: 200px;
-            text-align: center;
-        }
-        
-        .controls button.minus {
-            background: linear-gradient(180deg, #e63939, #a83232);
-            color: #fff;
-            text-shadow: 0 0 4px #000;
-        }
-
-        #ziel-bearbeiten-bereich {
-            margin-top: 15px;
-        }
-
-        #feedback {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #ff6666;
+        h1 {
+            color: #ffd700;
+            text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
         }
     </style>
 </head>
 <body>
-
     <button id="login-toggle-button">Login</button>
-    <button id="back-button" class="hidden">Zurück</button>
+    <div id="main-page" class="page-container">
+        <div class="card">
+            <h1>Hypixel SkyBlock Dashboard</h1>
+            <p>Willkommen! Klicke auf den Login-Knopf oben, um fortzufahren.</p>
+        </div>
+    </div>
 
     <div id="login-modal" class="modal hidden">
         <div class="modal-content">
@@ -244,101 +141,12 @@
         </div>
     </div>
 
-    <div id="item-manager-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Items verwalten für...</h2>
-            <button onclick="window.location.hash = '#nico-items'">Nico</button>
-            <button onclick="window.location.hash = '#niklas-items'">Niklas</button>
-        </div>
-    </div>
-
-    <div id="login-required-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Login erforderlich</h2>
-            <p>Bitte logge dich ein, um diesen Bereich zu betreten.</p>
-        </div>
-    </div>
-
-    <!-- MAIN PAGE -->
-    <div id="main-page" class="page-container">
-        <div class="card">
-            <h1>Hypixel SkyBlock Dashboard</h1>
-            <div class="main-button-container">
-                <button onclick="window.location.hash = '#coins'">💰 COOP Coins Counter</button>
-                <button id="items-button">📦 Item-Manager</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- COINS PAGE -->
-    <div id="coins-page" class="page-container hidden">
-        <div class="card">
-            <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
-            <div id="ziel-bearbeiten-bereich" class="hidden">
-                <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-                <button id="ziel-speichern-button">Ziel festlegen</button>
-            </div>
-            <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
-            <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
-
-            <div class="player-sections-container">
-                <div id="nico-section" class="player-section">
-                    <h2>🪙 Nico</h2>
-                    <div class="remaining" id="nico-value">0</div>
-                    <div class="value" id="nico-remaining">Verbleibend: 0</div>
-                    <div class="controls hidden" id="nico-controls">
-                        <input type="text" id="nico-input" placeholder="Coins eingeben" />
-                        <select id="nico-action-select">
-                            <option value="add">Hinzufügen</option>
-                            <option value="remove">Entfernen</option>
-                            <option value="set">Setzen</option>
-                        </select>
-                        <button id="nico-update-button">Ausführen</button>
-                    </div>
-                </div>
-
-                <div id="niklas-section" class="player-section">
-                    <h2>🪙 Niklas</h2>
-                    <div class="remaining" id="niklas-value">0</div>
-                    <div class="value" id="niklas-remaining">Verbleibend: 0</div>
-                    <div class="controls hidden" id="niklas-controls">
-                        <input type="text" id="niklas-input" placeholder="Coins eingeben" />
-                        <select id="niklas-action-select">
-                            <option value="add">Hinzufügen</option>
-                            <option value="remove">Entfernen</option>
-                            <option value="set">Setzen</option>
-                        </select>
-                        <button id="niklas-update-button">Ausführen</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NICO ITEMS PAGE -->
-    <div id="nico-items-page" class="page-container hidden">
-        <div class="card">
-            <h1>Nicos Item-Manager</h1>
-            <p>Hier kommt der Inhalt für Nicos Items hin.</p>
-        </div>
-    </div>
-
-    <!-- NIKLAS ITEMS PAGE -->
-    <div id="niklas-items-page" class="page-container hidden">
-        <div class="card">
-            <h1>Niklas' Item-Manager</h1>
-            <p>Hier kommt der Inhalt für Niklas' Items hin.</p>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-        // Konfiguration deiner Firebase-App
+        // Firebase-Konfiguration
         const firebaseConfig = {
             apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
             authDomain: "hypixel-skyblock-coop.firebaseapp.com",
@@ -348,160 +156,35 @@
             messagingSenderId: "918414851042",
             appId: "1:918414851042:web:65822393d076675386d7bb"
         };
-
+        
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
         const auth = getAuth(app);
+        const db = getDatabase(app);
 
         // Mapping von Firebase UID zu Spielernamen
         const ADMINS = {
             "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
             "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
         };
-        
-        let werte = { nico: 0, niklas: 0 };
-        let individuelleZiele = { nico: 0, niklas: 0 };
-        let istAdmin = false;
-        let currentAdminName = null;
 
-        // --- DOM-Elemente ---
+        let istAdmin = false;
+        
+        // DOM-Elemente
         const loginToggleButton = document.getElementById("login-toggle-button");
-        const backButton = document.getElementById("back-button");
         const loginModal = document.getElementById("login-modal");
-        const itemManagerModal = document.getElementById("item-manager-modal");
-        const loginRequiredModal = document.getElementById("login-required-modal");
         const closeButtons = document.querySelectorAll(".modal .close-button");
         const emailInput = document.getElementById("email-input");
         const passwordInput = document.getElementById("password");
         const loginButton = document.getElementById("login-button");
         const feedbackLogin = document.getElementById("feedback-login");
-        const itemsButton = document.getElementById("items-button");
-        const zielSpeichernButton = document.getElementById("ziel-speichern-button");
 
-        const pages = {
-            '#main': document.getElementById('main-page'),
-            '#coins': document.getElementById('coins-page'),
-            '#nico-items': document.getElementById('nico-items-page'),
-            '#niklas-items': document.getElementById('niklas-items-page')
-        };
-        
-        // --- Hilfsfunktionen ---
-        function formatNumber(n) {
-            if (n === null || n === undefined) return '0';
-            return n.toLocaleString('de-DE');
-        }
-
-        function formatWithSuffix(n) {
-            if (n === null || n === undefined) return '0';
-            if (n < 1000) return n.toLocaleString('de-DE');
-            const suffixes = ["", "k", "m", "b", "t", "q"];
-            const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
-            const suffix = suffixes[tier];
-            const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
-            return `${rounded}${suffix}`;
-        }
-
-        function parseWithSuffix(input) {
-            const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
-            const suffixes = { 'k': 1e3, 'm': 1e6, 'b': 1e9, 't': 1e12 };
-            const suffix = cleanedInput.slice(-1);
-            const value = parseFloat(cleanedInput);
-            if (suffixes[suffix]) return value * suffixes[suffix];
-            return value;
-        }
-
-        // --- Hauptfunktionen ---
-        function renderPage() {
-            const hash = window.location.hash || '#main';
-            backButton.classList.add('hidden');
-            
-            for (const page in pages) {
-                pages[page].classList.add('hidden');
-            }
-
-            if (pages[hash]) {
-                pages[hash].classList.remove('hidden');
-                if (hash !== '#main') {
-                    backButton.classList.remove('hidden');
-                }
-            } else {
-                pages['#main'].classList.remove('hidden');
-            }
-
-            // Spezial-Logik für die Coins-Seite
-            if (hash === '#coins') {
-                renderCoinsPage();
-            }
-        }
-        
-        function renderCoinsPage() {
-            const totalZiel = (individuelleZiele.nico || 0) + (individuelleZiele.niklas || 0);
-            const totalCoins = (werte.nico || 0) + (werte.niklas || 0);
-
-            document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
-            document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
-            
-            const coinsVerbleibend = totalZiel - totalCoins;
-            document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
-
-            ["nico", "niklas"].forEach(name => {
-                const valueElement = document.getElementById(`${name}-value`);
-                const remainingElement = document.getElementById(`${name}-remaining`);
-                
-                valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
-                
-                let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
-                if (remaining < 0) remaining = 0;
-                remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
-            });
-
-            const nicoControls = document.getElementById("nico-controls");
-            const niklasControls = document.getElementById("niklas-controls");
-            const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
-
-            nicoControls.classList.add("hidden");
-            niklasControls.classList.add("hidden");
-            zielBearbeitenBereich.classList.add("hidden");
-
-            // Zeigt Admin-Controls nur bei Admin-Login an
-            if (istAdmin) {
-                zielBearbeitenBereich.classList.remove("hidden");
-                if (currentAdminName === "nico") {
-                    nicoControls.classList.remove("hidden");
-                } else if (currentAdminName === "niklas") {
-                    niklasControls.classList.remove("hidden");
-                }
-            }
-        }
-
-        function renderUI() {
-            renderPage();
-            if (istAdmin) {
-                loginToggleButton.textContent = "Logout";
-            } else {
-                loginToggleButton.textContent = "Login";
-            }
-        }
-        
-        // --- Event Listener ---
+        // Event-Listener für den Login-Knopf
         loginToggleButton.addEventListener("click", () => {
             if (istAdmin) {
                 signOut(auth);
             } else {
                 loginModal.style.display = 'flex';
             }
-        });
-        
-        itemsButton.addEventListener("click", () => {
-            if (istAdmin) {
-                itemManagerModal.style.display = 'flex';
-            } else {
-                loginRequiredModal.style.display = 'flex';
-            }
-        });
-
-        backButton.addEventListener("click", () => {
-            window.location.hash = '#main';
         });
 
         // Alle Modal-Schließ-Buttons
@@ -525,58 +208,15 @@
                     console.error("Login-Fehler:", error.message);
                 });
         });
-        
-        zielSpeichernButton.addEventListener("click", () => {
-            if (!istAdmin) return;
-            const neuesZiel = parseWithSuffix(document.getElementById('ziel-input').value);
-            if (isNaN(neuesZiel) || neuesZiel < 0) {
-                alert("Ungültige Zieleingabe!");
-                return;
-            }
-            set(ref(db, `individual_ziels/${currentAdminName}`), neuesZiel);
-        });
 
-        document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
-        document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
-        
-        async function updateCoins(name) {
-            if (!istAdmin) return;
-            const input = document.getElementById(`${name}-input`);
-            const actionSelect = document.getElementById(`${name}-action-select`);
-            const action = actionSelect.value;
-            let val = parseWithSuffix(input.value);
-            if (isNaN(val) || val < 0) {
-                alert("Ungültige Eingabe!");
-                return;
-            }
-            const snapshot = await get(ref(db, `coins/${name}`));
-            let currentValue = snapshot.exists() ? snapshot.val() : 0;
-            if (action === 'add') currentValue += val;
-            else if (action === 'remove') currentValue = Math.max(0, currentValue - val);
-            else if (action === 'set') currentValue = val;
-            input.value = "";
-            await set(ref(db, `coins/${name}`), currentValue);
-        }
-
-        // --- Firebase Live-Daten-Listener ---
         onAuthStateChanged(auth, (user) => {
             istAdmin = !!(user && ADMINS[user.uid]);
-            currentAdminName = istAdmin ? ADMINS[user.uid] : null;
-            renderUI();
+            if (istAdmin) {
+                loginToggleButton.textContent = "Logout";
+            } else {
+                loginToggleButton.textContent = "Login";
+            }
         });
-
-        onValue(ref(db, 'coins'), (snapshot) => {
-            werte = snapshot.exists() ? snapshot.val() : { nico: 0, niklas: 0 };
-            renderUI();
-        });
-        
-        onValue(ref(db, 'individual_ziels'), (snapshot) => {
-            individuelleZiele = snapshot.exists() ? snapshot.val() : { nico: 0, niklas: 0 };
-            renderUI();
-        });
-
-        window.addEventListener('hashchange', renderPage);
-        window.addEventListener('load', renderPage);
     </script>
 </body>
 </html>
