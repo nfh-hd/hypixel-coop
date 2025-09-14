@@ -15,7 +15,7 @@
       background: #2a2a40;
       padding: 20px;
       border-radius: 12px;
-      max-width: 600px;
+      max-width: 650px;
       margin: auto;
     }
     select, input, button {
@@ -37,6 +37,7 @@
       padding: 15px;
       background: #33334d;
       border-radius: 10px;
+      text-align: left;
     }
   </style>
 </head>
@@ -80,13 +81,18 @@
     <input type="number" id="currentXp" value="0">
     <br>
 
+    <!-- Ziel Level -->
+    <label for="targetLevel">Ziel-Level:</label>
+    <input type="number" id="targetLevel" min="1" max="50" value="50">
+    <br>
+
     <button onclick="calculate()">Berechnen</button>
 
     <div class="result" id="result"></div>
   </div>
 
   <script>
-    // XP Tabelle aus deiner Liste
+    // XP Tabelle (kumuliert)
     const catacombsXP = [
       0,50,125,235,395,625,955,1425,2095,3045,4385,
       6275,8940,12700,17960,25340,35640,50040,70040,
@@ -103,21 +109,31 @@
       const hasRing = document.getElementById("expRing").checked;
       const level = parseInt(document.getElementById("level").value);
       const currentXp = parseInt(document.getElementById("currentXp").value);
+      const targetLevel = parseInt(document.getElementById("targetLevel").value);
 
       // Bonus berechnen
       let xpGain = floorXp;
       if (hasRing) xpGain = Math.floor(xpGain * 1.1);
 
-      // Ziel für nächstes Level
+      // Progress aktuelles Level
       let nextLevelXp = catacombsXP[level] || catacombsXP[catacombsXP.length - 1];
       let progress = ((currentXp - catacombsXP[level-1]) / (nextLevelXp - catacombsXP[level-1])) * 100;
+
+      // Ziel-Level Berechnung
+      const targetXp = catacombsXP[targetLevel];
+      const xpNeeded = Math.max(0, targetXp - currentXp);
+      const runsNeeded = Math.ceil(xpNeeded / xpGain);
 
       document.getElementById("result").innerHTML = `
         <p><b>XP Gewinn pro Run:</b> ${xpGain.toLocaleString()}</p>
         <p><b>Gesamt XP:</b> ${currentXp.toLocaleString()}</p>
         <p><b>Nächstes Level (${level+1}):</b> ${nextLevelXp.toLocaleString()} XP</p>
-        <p><b>Fortschritt:</b> ${progress.toFixed(2)}%</p>
-        <p><b>Noch nötig:</b> ${(nextLevelXp - currentXp).toLocaleString()} XP</p>
+        <p><b>Fortschritt aktuelles Level:</b> ${progress.toFixed(2)}%</p>
+        <hr>
+        <p><b>Ziel-Level:</b> ${targetLevel}</p>
+        <p><b>Benötigte Gesamt-XP:</b> ${targetXp.toLocaleString()}</p>
+        <p><b>Noch nötig:</b> ${xpNeeded.toLocaleString()} XP</p>
+        <p><b>Ungefähr benötigte Runs:</b> ${runsNeeded.toLocaleString()}</p>
       `;
     }
   </script>
