@@ -232,8 +232,7 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
-        // NEU: Imports für die Authentifizierung
+        import { getDatabase, ref, push, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -248,9 +247,9 @@
         
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        const auth = getAuth(app); // NEU: Auth-Instanz
+        const auth = getAuth(app);
 
-        const ADMINS = { // Übernommen aus der coins.html
+        const ADMINS = {
             "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
             "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
         };
@@ -269,12 +268,10 @@
         const passwordInput = document.getElementById('password-input');
         const feedbackElement = document.getElementById('feedback');
 
-        let currentUser = null; // Variable, um den eingeloggten Nutzer zu speichern
+        let currentUser = null;
 
-        // Bestimmt den Benutzernamen aus dem Titel
         const user = pageTitle.includes("Niklas") ? "niklas" : "nico";
 
-        // Funktion zum Laden und Anzeigen der Items
         function renderItems(itemsData) {
             const existingItems = itemList.querySelectorAll('.item-row:not(:first-child)');
             existingItems.forEach(item => item.remove());
@@ -289,36 +286,39 @@
                         <span>${item.name}</span>
                         <span>${item.price} Coins</span>
                         <span>${item.quantity}</span>
-                        <button class="delete-button">X</button>
+                        <button class="delete-button">Löschen</button>
                     `;
                     itemList.appendChild(newItemRow);
                 });
             }
         }
 
-        // Funktion zum Hinzufügen eines Items
-        function addItem() {
-            if (!currentUser || ADMINS[currentUser.uid] !== user) { // NEU: Überprüfung, ob der richtige Admin eingeloggt ist
+        async function addItem() {
+            if (!currentUser || ADMINS[currentUser.uid] !== user) {
                 alert('Bitte log dich zuerst ein, um Items hinzuzufügen!');
                 return;
             }
 
             const name = itemNameInput.value.trim();
-            const price = itemPriceInput.value.trim();
-            const quantity = itemQuantityInput.value.trim();
+            const price = parseFloat(itemPriceInput.value);
+            const quantity = parseInt(itemQuantityInput.value);
 
-            if (name === '' || price === '' || quantity === '') {
-                alert('Bitte alle Felder ausfüllen!');
+            if (name === '' || isNaN(price) || isNaN(quantity)) {
+                alert('Bitte alle Felder mit gültigen Zahlen ausfüllen!');
                 return;
             }
 
+            const totalCost = price * quantity;
+
             const itemData = {
                 name: name,
-                price: parseFloat(price),
-                quantity: parseInt(quantity)
+                price: price,
+                quantity: quantity
             };
 
             const itemsRef = ref(database, `items/${user}`);
+            const zielsRef = ref(database, `individual_ziels/${user}`);
+
             push(itemsRef, itemData)
                 .then(() => {
                     console.log("Item erfolgreich gespeichert!");
@@ -327,14 +327,24 @@
                     console.error("Fehler beim Speichern:", error);
                 });
 
+            try {
+                const snapshot = await get(zielsRef);
+                const currentZiel = snapshot.val() || 0;
+                const newZiel = currentZiel + totalCost;
+
+                await update(ref(database, 'individual_ziels'), { [user]: newZiel });
+                console.log("Ziel erfolgreich aktualisiert!");
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren des Ziels:", error);
+            }
+
             itemNameInput.value = '';
             itemPriceInput.value = '';
             itemQuantityInput.value = '';
         }
 
-        // Funktion zum Löschen eines Items in der Datenbank
         itemList.addEventListener('click', function(event) {
-            if (!currentUser || ADMINS[currentUser.uid] !== user) { // NEU: Überprüfung, ob der richtige Admin eingeloggt ist
+            if (!currentUser || ADMINS[currentUser.uid] !== user) {
                 alert('Bitte log dich zuerst ein, um Items zu löschen!');
                 return;
             }
@@ -353,7 +363,6 @@
             }
         });
 
-        // Login-Logik
         loginButton.addEventListener('click', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -377,13 +386,11 @@
             loginModal.style.display = 'none';
         });
 
-        // Überwacht den Anmeldestatus
         onAuthStateChanged(auth, (userState) => {
             currentUser = userState;
             if (currentUser && ADMINS[currentUser.uid] === user) {
                 console.log(`Eingeloggt als Admin: ${user}`);
                 const itemsRef = ref(database, `items/${user}`);
-                // Startet den onValue-Listener nur, wenn der richtige Admin eingeloggt ist
                 onValue(itemsRef, (snapshot) => {
                     const items = snapshot.val();
                     renderItems(items);
@@ -391,9 +398,7 @@
                 loginModal.style.display = 'none';
             } else {
                 console.log('Kein Admin eingeloggt oder falscher Admin.');
-                // Zeigt das Login-Modal, wenn kein Admin eingeloggt ist
                 loginModal.style.display = 'flex';
-                // Leert die Liste, wenn man sich ausloggt
                 renderItems(null);
             }
         });
