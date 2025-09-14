@@ -1,1 +1,457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypixel Items</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+        body {
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e6eef8;
+            background: radial-gradient(circle at top, #ffd700 10%, #b8860b 15%, #0b1220 100%);
+            background-attachment: fixed;
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .page-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(15, 15, 15, 0.9);
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 12px rgba(255, 215, 0, 0.2);
+            width: fit-content;
+            max-width: 90%;
+            border: 2px solid #ffd700;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
+            font-size: 25px;
+        }
+
+        button, input {
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 2px solid #111;
+            cursor: pointer;
+            background: linear-gradient(180deg, #ffdd44, #ff9900);
+            color: #111;
+            font-weight: bold;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            text-shadow: 0 0 4px #ffd700;
+            transition: transform 0.1s, box-shadow 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        input {
+            background: #2a2a2a;
+            color: #ffd700;
+            border-color: #ffd700;
+            text-shadow: none;
+        }
+        
+        input::placeholder {
+            color: #aaa;
+            opacity: 0.7;
+        }
+
+        .main-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 40px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
+        .main-button img {
+            width: 64px;
+            height: 64px;
+            image-rendering: pixelated;
+        }
+        
+        .item-input-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .item-input-row input {
+            flex-grow: 1;
+            min-width: 80px;
+            padding: 8px;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 50px;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            align-items: center;
+            text-align: left;
+        }
+        
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .delete-button {
+            background: #ff4d4d;
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 10px;
+            margin: 0;
+        }
+        
+        /* Neuer Style für den Login-Bereich */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #1c1c1c;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        .modal .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal .close-button:hover,
+        .modal .close-button:focus {
+            color: #fff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="login-area" class="login-controls">
+                <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
+                <input type="password" id="password-input" placeholder="Admin Passwort" />
+                <button id="login-button">Login</button>
+                <div id="feedback"></div>
+            </div>
+        </div>
+    </div>
+    <div class="page-container">
+        <a href="index.html">
+            <button>Dashboard</button>
+        </a>
+        <div class="card">
+            <h1>Celine's Items</h1>
+
+            <div id="controls" class="item-input-row hidden">
+                <input type="text" id="itemNameInput" placeholder="Item Name">
+                <input type="number" id="itemPriceInput" placeholder="Preis">
+                <input type="number" id="itemQuantityInput" placeholder="Menge">
+                <button id="addButton">Hinzufügen</button>
+            </div>
+
+            <div id="itemList" class="item-list">
+                <div class="item-row" style="border-bottom: 2px solid #ffd700;">
+                    <span style="font-weight: bold;">Item Name</span>
+                    <span style="font-weight: bold;">Preis</span>
+                    <span style="font-weight: bold;">Menge</span>
+                    <span class="delete-header"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
+            authDomain: "hypixel-skyblock-coop.firebaseapp.com",
+            databaseURL: "https://hypixel-skyblock-coop-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "hypixel-skyblock-coop",
+            storageBucket: "hypixel-skyblock-coop.firebasestorage.app",
+            messagingSenderId: "918414851042",
+            appId: "1:918414851042:web:65822393d076675386d7bb"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        const ADMINS = {
+            "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
+            "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas",
+            "7Vc4n47PKveOY4FhG4vZyXtWHov2": "celine"
+        };
+
+        const itemNameInput = document.getElementById('itemNameInput');
+        const itemPriceInput = document.getElementById('itemPriceInput');
+        const itemQuantityInput = document.getElementById('itemQuantityInput');
+        const addButton = document.getElementById('addButton');
+        const itemList = document.getElementById('itemList');
+        const controlsElement = document.getElementById('controls');
+        
+        const pageTitle = document.querySelector('h1').textContent;
+
+        const loginModal = document.getElementById('login-modal');
+        const loginButton = document.getElementById('login-button');
+        const closeButton = document.querySelector('.modal .close-button');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const feedbackElement = document.getElementById('feedback');
+        
+        const deleteHeaderElement = document.querySelector('.item-row .delete-header');
+
+        let currentUser = null;
+
+        const user = pageTitle.includes("Celine") ? "celine" : (pageTitle.includes("Niklas") ? "niklas" : "nico");
+
+        function renderItems(itemsData) {
+            const existingItems = itemList.querySelectorAll('.item-row:not(:first-child)');
+            existingItems.forEach(item => item.remove());
+
+            if (itemsData) {
+                Object.keys(itemsData).forEach(key => {
+                    const item = itemsData[key];
+                    const newItemRow = document.createElement('div');
+                    newItemRow.classList.add('item-row');
+                    newItemRow.setAttribute('data-key', key);
+                    newItemRow.innerHTML = `
+                        <span>${item.name}</span>
+                        <span>${item.price} Coins</span>
+                        <span>${item.quantity}</span>
+                        <button class="delete-button">X</button>
+                    `;
+                    itemList.appendChild(newItemRow);
+                });
+            }
+        }
+
+        async function addItem() {
+            if (!currentUser || ADMINS[currentUser.uid] !== user) {
+                alert('Bitte log dich zuerst ein, um Items hinzuzufügen!');
+                return;
+            }
+
+            const name = itemNameInput.value.trim();
+            const price = parseFloat(itemPriceInput.value);
+            const quantity = parseInt(itemQuantityInput.value);
+
+            if (name === '' || isNaN(price) || isNaN(quantity)) {
+                alert('Bitte alle Felder mit gültigen Zahlen ausfüllen!');
+                return;
+            }
+
+            const totalCost = price * quantity;
+
+            const itemData = {
+                name: name,
+                price: price,
+                quantity: quantity
+            };
+
+            const itemsRef = ref(database, `items/${user}`);
+            const zielsRef = ref(database, `individual_ziels/${user}`);
+
+            push(itemsRef, itemData)
+                .then(() => {
+                    console.log("Item erfolgreich gespeichert!");
+                })
+                .catch(error => {
+                    console.error("Fehler beim Speichern:", error);
+                });
+
+            try {
+                const snapshot = await get(zielsRef);
+                const currentZiel = snapshot.val() || 0;
+                const newZiel = currentZiel + totalCost;
+
+                await update(ref(database, 'individual_ziels'), { [user]: newZiel });
+                console.log("Ziel erfolgreich aktualisiert!");
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren des Ziels:", error);
+            }
+
+            itemNameInput.value = '';
+            itemPriceInput.value = '';
+            itemQuantityInput.value = '';
+        }
+
+        itemList.addEventListener('click', async function(event) {
+            if (!currentUser || ADMINS[currentUser.uid] !== user) {
+                alert('Bitte log dich zuerst ein, um Items zu löschen!');
+                return;
+            }
+            if (event.target.classList.contains('delete-button')) {
+                const itemRow = event.target.closest('.item-row');
+                const itemKey = itemRow.getAttribute('data-key');
+                
+                try {
+                    const itemRef = ref(database, `items/${user}/${itemKey}`);
+                    const itemSnapshot = await get(itemRef);
+                    const itemData = itemSnapshot.val();
+
+                    if (itemData) {
+                        const totalCost = itemData.price * itemData.quantity;
+                        const zielsRef = ref(database, `individual_ziels/${user}`);
+                        
+                        const zielSnapshot = await get(zielsRef);
+                        const currentZiel = zielSnapshot.val() || 0;
+                        const newZiel = Math.max(0, currentZiel - totalCost);
+
+                        await update(ref(database, 'individual_ziels'), { [user]: newZiel });
+                        console.log("Ziel nach Löschung erfolgreich aktualisiert!");
+
+                        await remove(itemRef);
+                        console.log("Item erfolgreich gelöscht!");
+                    } else {
+                        console.log("Item nicht in der Datenbank gefunden.");
+                    }
+                } catch (error) {
+                    console.error("Ein Fehler ist beim Löschvorgang aufgetreten:", error);
+                    alert("Es gab einen Fehler beim Löschen des Items. Bitte versuch es erneut.");
+                }
+            }
+        });
+
+        loginButton.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => {
+                    feedbackElement.textContent = 'Erfolgreich eingeloggt!';
+                    feedbackElement.style.color = '#00ff99';
+                    setTimeout(() => {
+                        loginModal.style.display = 'none';
+                    }, 1500);
+                })
+                .catch(error => {
+                    feedbackElement.textContent = 'Login fehlgeschlagen!';
+                    feedbackElement.style.color = '#ff6666';
+                    console.error('Login-Fehler:', error.message);
+                });
+        });
+
+        closeButton.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+        
+        function updateUIForAdmin(isAdmin) {
+            if (isAdmin) {
+                controlsElement.classList.remove('hidden');
+                document.querySelectorAll('.delete-button').forEach(btn => btn.style.display = 'block');
+                deleteHeaderElement.textContent = 'Löschen';
+            } else {
+                controlsElement.classList.add('hidden');
+                document.querySelectorAll('.delete-button').forEach(btn => btn.style.display = 'none');
+                deleteHeaderElement.textContent = '';
+            }
+        }
+
+        onAuthStateChanged(auth, (userState) => {
+            currentUser = userState;
+            const isAdminForThisPage = (currentUser && ADMINS[currentUser.uid] === user);
+            
+            updateUIForAdmin(isAdminForThisPage);
+
+            if (!isAdminForThisPage) {
+                loginModal.style.display = 'flex';
+            } else {
+                loginModal.style.display = 'none';
+            }
+
+            const itemsRef = ref(database, `items/${user}`);
+            onValue(itemsRef, (snapshot) => {
+                const items = snapshot.val();
+                renderItems(items);
+                // Buttons nach dem Rendern wieder verstecken, falls nötig
+                if (!isAdminForThisPage) {
+                    document.querySelectorAll('.delete-button').forEach(btn => btn.style.display = 'none');
+                }
+            });
+        });
+
+        addButton.addEventListener('click', addItem);
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                addItem();
+            }
+        });
+    </script>
+</body>
+</html>
