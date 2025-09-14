@@ -15,8 +15,6 @@
             justify-content: center;
             align-items: center;
             color: #e6eef8;
-            /* Dieser Hintergrund-Stil ist der, der den Dunkelmodus erstellt. 
-               Deine kaputte Version hatte hier vermutlich ein "background-color: white;" */
             background: radial-gradient(circle at top, #ffd700 10%, #b8860b 15%, #0b1220 100%);
             background-attachment: fixed;
             overflow: auto;
@@ -298,6 +296,10 @@
     
     <div class="card">
         <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
+        <div id="ziel-bearbeiten-bereich" class="hidden">
+            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
+            <button id="ziel-speichern-button">Ziel festlegen</button>
+        </div>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
         <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
 
@@ -413,7 +415,7 @@
             });
             
             dashboardButton.addEventListener("click", () => {
-                window.location.href = "https://nfh-hd.github.io/hypixel-coop";
+                window.location.href = "index.html";
             });
 
             function formatNumber(n) {
