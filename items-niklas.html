@@ -133,7 +133,7 @@
 
         .item-row {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-columns: 2fr 1fr 1fr 50px; /* 4 Spalten: Item, Preis, Menge, Löschen-Knopf */
             gap: 10px;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 215, 0, 0.3);
@@ -144,51 +144,95 @@
         .item-row:last-child {
             border-bottom: none;
         }
+
+        .delete-button {
+            background: #ff4d4d;
+            color: #fff;
+            padding: 5px 8px;
+            font-size: 10px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
     <div class="page-container">
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <a href="index.html">
-                <button>Dashboard</button>
-            </a>
-            <button>Login</button>
-        </div>
-
+        <a href="index.html">
+            <button>Dashboard</button>
+        </a>
         <div class="card">
             <h1>Niklas' Items</h1>
 
             <div class="item-input-row">
-                <input type="text" placeholder="Item Name">
-                <input type="number" placeholder="Preis">
-                <input type="number" placeholder="Menge">
-                <button>Hinzufügen</button>
+                <input type="text" id="itemNameInput" placeholder="Item Name">
+                <input type="number" id="itemPriceInput" placeholder="Preis">
+                <input type="number" id="itemQuantityInput" placeholder="Menge">
+                <button id="addButton">Hinzufügen</button>
             </div>
 
-            <div class="item-list">
+            <div id="itemList" class="item-list">
                 <div class="item-row" style="border-bottom: 2px solid #ffd700;">
                     <span style="font-weight: bold;">Item Name</span>
                     <span style="font-weight: bold;">Preis</span>
                     <span style="font-weight: bold;">Menge</span>
+                    <span></span> </div>
                 </div>
-                
-                <div class="item-row">
-                    <span>Item 1</span>
-                    <span>10 Coins</span>
-                    <span>5</span>
-                </div>
-                <div class="item-row">
-                    <span>Item 2</span>
-                    <span>20 Coins</span>
-                    <span>8</span>
-                </div>
-                <div class="item-row">
-                    <span>Item 3</span>
-                    <span>50 Coins</span>
-                    <span>12</span>
-                </div>
-            </div>
         </div>
     </div>
+    
+    <script>
+        // DOM-Elemente auswählen
+        const itemNameInput = document.getElementById('itemNameInput');
+        const itemPriceInput = document.getElementById('itemPriceInput');
+        const itemQuantityInput = document.getElementById('itemQuantityInput');
+        const addButton = document.getElementById('addButton');
+        const itemList = document.getElementById('itemList');
+
+        // Funktion zum Hinzufügen eines Items
+        function addItem() {
+            const name = itemNameInput.value.trim();
+            const price = itemPriceInput.value.trim();
+            const quantity = itemQuantityInput.value.trim();
+
+            if (name === '' || price === '' || quantity === '') {
+                alert('Bitte alle Felder ausfüllen!');
+                return;
+            }
+
+            // Neues HTML-Element für die Item-Zeile erstellen
+            const newItemRow = document.createElement('div');
+            newItemRow.classList.add('item-row');
+            newItemRow.innerHTML = `
+                <span>${name}</span>
+                <span>${price} Coins</span>
+                <span>${quantity}</span>
+                <button class="delete-button">Löschen</button>
+            `;
+
+            // Die neue Zeile zur Liste hinzufügen
+            itemList.appendChild(newItemRow);
+
+            // Eingabefelder leeren
+            itemNameInput.value = '';
+            itemPriceInput.value = '';
+            itemQuantityInput.value = '';
+        }
+
+        // Funktion zum Löschen eines Items (Event Delegation)
+        itemList.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-button')) {
+                event.target.closest('.item-row').remove();
+            }
+        });
+
+        // Event-Listener für den Hinzufügen-Knopf
+        addButton.addEventListener('click', addItem);
+        
+        // Hinzufügen per Enter-Taste in den Feldern
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                addItem();
+            }
+        });
+    </script>
 </body>
 </html>
