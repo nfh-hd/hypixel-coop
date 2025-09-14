@@ -137,6 +137,24 @@
             transform: translateX(-50%);
             z-index: 100;
         }
+
+        /* NEUE CSS-Regeln für das Items-Menü */
+        .items-modal-content a {
+            display: block;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border: 2px solid #ffd700;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #ffd700;
+            font-family: 'Press Start 2P', cursive;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        .items-modal-content a:hover {
+            background-color: #ffd700;
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -154,7 +172,7 @@
                     <img src="cata.png" onerror="this.src='https://placehold.co/64x64/000000/FFFFFF?text=Cata'">
                     <span>Cata Calculator (Soon)</span>
                 </button>
-                <button class="main-button" onclick="window.location.href = 'items.html'">
+                <button id="items-button" class="main-button">
                     <img src="items.png" onerror="this.src='https://placehold.co/64x64/000000/FFFFFF?text=Items'">
                     <span>Items</span>
                 </button>
@@ -178,6 +196,15 @@
             <span class="close-button">&times;</span>
             <h2>Login erforderlich</h2>
             <p>Bitte logge dich ein, um diesen Bereich zu betreten.</p>
+        </div>
+    </div>
+
+    <div id="items-modal" class="modal hidden">
+        <div class="modal-content items-modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Wer bist du?</h2>
+            <a href="niklas-items.html">Niklas</a>
+            <a href="nico-items.html">Nico</a>
         </div>
     </div>
 
@@ -212,6 +239,8 @@
         const loginToggleButton = document.getElementById("login-toggle-button");
         const loginModal = document.getElementById("login-modal");
         const loginRequiredModal = document.getElementById("login-required-modal");
+        const itemsButton = document.getElementById("items-button"); // NEU
+        const itemsModal = document.getElementById("items-modal"); // NEU
         const closeButtons = document.querySelectorAll(".modal .close-button");
         const emailInput = document.getElementById("email-input");
         const passwordInput = document.getElementById("password");
@@ -222,7 +251,6 @@
             if (!istAdmin) {
                 loginRequiredModal.style.display = 'flex';
             } else {
-                // Hier würden wir zum Item-Manager weiterleiten
                 window.location.hash = '#items';
             }
         }
@@ -234,6 +262,11 @@
             } else {
                 loginModal.style.display = 'flex';
             }
+        });
+
+        // Event-Listener für den neuen Items-Knopf
+        itemsButton.addEventListener("click", () => {
+            itemsModal.style.display = 'flex';
         });
 
         // Alle Modal-Schließ-Buttons
@@ -269,6 +302,3 @@
     </script>
 </body>
 </html>
-
-
-
