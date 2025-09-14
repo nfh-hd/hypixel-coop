@@ -45,7 +45,6 @@
   <div class="container">
     <h1>Catacombs XP Rechner</h1>
 
-    <!-- Dungeon Floor Auswahl -->
     <label for="floor">Dungeon Floor:</label>
     <select id="floor">
       <option value="500">F1 (500 XP)</option>
@@ -65,23 +64,19 @@
     </select>
     <br>
 
-    <!-- Ring Bonus -->
     <label>
       <input type="checkbox" id="expRing"> 10% Dungeon Experience Ring
     </label>
     <br>
 
-    <!-- Aktuelles Level -->
     <label for="level">Aktuelles Level:</label>
     <input type="number" id="level" min="1" max="50" value="1">
     <br>
 
-    <!-- Aktuelle XP -->
     <label for="currentXp">Aktuelle XP (gesamt):</label>
     <input type="number" id="currentXp" value="0">
     <br>
 
-    <!-- Ziel Level -->
     <label for="targetLevel">Ziel-Level:</label>
     <input type="number" id="targetLevel" min="1" max="50" value="50">
     <br>
@@ -92,15 +87,14 @@
   </div>
 
   <script>
-    // XP Tabelle (kumuliert)
     const catacombsXP = [
-      0,50,125,235,395,625,955,1425,2095,3045,4385,
-      6275,8940,12700,17960,25340,35640,50040,70040,
-      97640,135640,188140,259640,356640,488640,668640,
-      911640,1239640,1684640,2284640,3084640,4149640,
-      5559640,7459640,9959640,13259640,17559640,23159640,
-      30359640,39559640,51559640,66559640,85559640,10959640,
-      13959640,17759640,22559640,28559640,36059640,45359640,
+      0, 50, 125, 235, 395, 625, 955, 1425, 2095, 3045, 4385, 
+      6275, 8940, 12700, 17960, 25340, 35640, 50040, 70040, 
+      97640, 135640, 188140, 259640, 356640, 488640, 668640,
+      911640, 1239640, 1684640, 2284640, 3084640, 4149640,
+      5559640, 7459640, 9959640, 13259640, 17559640, 23159640,
+      30359640, 39559640, 51559640, 66559640, 85559640, 109559640,
+      139559640, 177559640, 225559640, 285559640, 360559640, 453559640,
       569809640
     ];
 
@@ -111,23 +105,22 @@
       const currentXp = parseInt(document.getElementById("currentXp").value);
       const targetLevel = parseInt(document.getElementById("targetLevel").value);
 
-      // Bonus berechnen
       let xpGain = floorXp;
-      if (hasRing) xpGain = Math.floor(xpGain * 1.1);
+      if (hasRing) {
+        xpGain = Math.floor(xpGain * 1.1);
+      }
 
-      // Progress aktuelles Level
-      let nextLevelXp = catacombsXP[level] || catacombsXP[catacombsXP.length - 1];
-      let progress = ((currentXp - catacombsXP[level-1]) / (nextLevelXp - catacombsXP[level-1])) * 100;
-
-      // Ziel-Level Berechnung
-      const targetXp = catacombsXP[targetLevel];
+      const nextLevelXp = catacombsXP[level];
+      const progress = ((currentXp - catacombsXP[level-1]) / (nextLevelXp - catacombsXP[level-1])) * 100;
+      
+      const targetXp = catacombsXP[targetLevel-1];
       const xpNeeded = Math.max(0, targetXp - currentXp);
       const runsNeeded = Math.ceil(xpNeeded / xpGain);
 
       document.getElementById("result").innerHTML = `
         <p><b>XP Gewinn pro Run:</b> ${xpGain.toLocaleString()}</p>
         <p><b>Gesamt XP:</b> ${currentXp.toLocaleString()}</p>
-        <p><b>Nächstes Level (${level+1}):</b> ${nextLevelXp.toLocaleString()} XP</p>
+        <p><b>Nächstes Level (${level + 1}):</b> ${nextLevelXp.toLocaleString()} XP</p>
         <p><b>Fortschritt aktuelles Level:</b> ${progress.toFixed(2)}%</p>
         <hr>
         <p><b>Ziel-Level:</b> ${targetLevel}</p>
