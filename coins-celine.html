@@ -295,8 +295,25 @@
     </div>
     
     <div class="card">
+        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
         <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
+        
+        <div class="player-sections-container">
+            <div id="celine-section" class="player-section">
+                <h2>🪙 Celine</h2>
+                <div class="remaining" id="celine-value">0</div>
+                <div class="controls hidden" id="celine-controls">
+                    <input type="text" id="celine-input" placeholder="Coins eingeben" />
+                    <select id="celine-action-select">
+                        <option value="add">Hinzufügen</option>
+                        <option value="remove">Entfernen</option>
+                        <option value="set">Setzen</option>
+                    </select>
+                    <button id="celine-update-button">Ausführen</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -393,15 +410,76 @@
                 const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
                 return `${rounded}${suffix}`;
             }
+
+            function parseWithSuffix(input) {
+                const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
+                const suffixes = {
+                    'k': 1000,
+                    'm': 1000000,
+                    'b': 1000000000,
+                    't': 1000000000000
+                };
+                const suffix = cleanedInput.slice(-1);
+                const value = parseFloat(cleanedInput);
+                
+                if (suffixes[suffix]) {
+                    return value * suffixes[suffix];
+                }
+                return value;
+            }
+
+            async function updateCoins(name) {
+                if (!istCeline) return;
+                const input = document.getElementById(`${name}-input`);
+                const actionSelect = document.getElementById(`${name}-action-select`);
+                const action = actionSelect.value;
+                let val = parseWithSuffix(input.value);
+
+                if (isNaN(val) || val < 0) {
+                    feedbackElement.textContent = "Ungültige Eingabe!";
+                    feedbackElement.style.color = "#ff6666";
+                    return;
+                }
+                
+                const snapshot = await get(ref(db, `coins/${name}`));
+                let currentValue = snapshot.exists() ? snapshot.val() : 0;
+
+                if (action === 'add') {
+                    currentValue += val;
+                } else if (action === 'remove') {
+                    currentValue -= val;
+                    if (currentValue < 0) currentValue = 0;
+                } else if (action === 'set') {
+                    currentValue = val;
+                }
+
+                input.value = "";
+                
+                try {
+                    await set(ref(db, `coins/${name}`), currentValue);
+                    console.log(`Daten für ${name} erfolgreich in Firebase gespeichert.`);
+                } catch (error) {
+                    console.error("Fehler beim Speichern in Firebase:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
+                    feedbackElement.style.color = "#ff6666";
+                }
+            }
             
             function render() {
                 const coinsVerbleibend = itemTotal - currentCoins;
 
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(itemTotal)} (${formatWithSuffix(itemTotal)})`;
                 document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
+                document.getElementById('celine-value').textContent = `${formatNumber(currentCoins)} (${formatWithSuffix(currentCoins)})`;
+
+                const celineControls = document.getElementById("celine-controls");
+                celineControls.classList.add("hidden");
 
                 if (istAdmin) {
                     loginToggleButton.textContent = "Logout";
+                    if (istCeline) {
+                        celineControls.classList.remove("hidden");
+                    }
                 } else {
                     loginToggleButton.textContent = "Login";
                 }
@@ -455,6 +533,8 @@
                 }
                 render();
             });
+
+            document.getElementById("celine-update-button").addEventListener("click", () => updateCoins("celine"));
 
             onValue(ref(db, 'items/celine'), (snapshot) => {
                 if (snapshot.exists()) {
