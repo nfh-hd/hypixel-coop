@@ -295,14 +295,7 @@
     </div>
     
     <div class="card">
-        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
-        <div id="ziel-bearbeiten-bereich" class="hidden">
-            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-            <button id="ziel-speichern-button">Ziel festlegen</button>
-        </div>
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
-        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
-
         <div class="player-sections-container">
             <div id="celine-section" class="player-section">
                 <h2>🪙 Celine</h2>
@@ -348,9 +341,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             let werte = {
-                celine: 0
-            };
-            let individuelleZiele = {
                 celine: 0
             };
             let istAdmin = false;
@@ -437,28 +427,6 @@
                 return value;
             }
             
-            function updateZiel() {
-                if (!istCeline) return;
-                const input = document.getElementById(`ziel-input`);
-                let neuesZiel = parseWithSuffix(input.value);
-
-                if (isNaN(neuesZiel) || neuesZiel < 0) {
-                    feedbackElement.textContent = "Ungültige Zieleingabe!";
-                    feedbackElement.style.color = "#ff6666";
-                    return;
-                }
-
-                input.value = "";
-                try {
-                    set(ref(db, `individual_ziels/celine`), neuesZiel);
-                    console.log(`Ziel für Celine erfolgreich gespeichert.`);
-                } catch (error) {
-                    console.error("Fehler beim Speichern des Ziels:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
-                    feedbackElement.style.color = "#ff6666";
-                }
-            }
-
             async function updateCoins(name) {
                 if (!istCeline) return;
                 const input = document.getElementById(`${name}-input`);
@@ -497,36 +465,20 @@
             }
 
             function render() {
-                const totalZiel = (individuelleZiele.celine || 0);
                 const totalCoins = (werte.celine || 0);
-
-                document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
                 
-                const coinsVerbleibend = totalZiel - totalCoins;
-                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
-
                 ["celine"].forEach(name => {
                     const valueElement = document.getElementById(`${name}-value`);
-                    const remainingElement = document.getElementById(`${name}-remaining`);
-                    
                     valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
-                    
-                    let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
-                    if (remaining < 0) remaining = 0;
-                    remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
                 });
 
                 const celineControls = document.getElementById("celine-controls");
-                const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
-
                 celineControls.classList.add("hidden");
-                zielBearbeitenBereich.classList.add("hidden");
 
                 if (istAdmin) {
                     loginToggleButton.textContent = "Logout";
                     if (istCeline) {
-                        zielBearbeitenBereich.classList.remove("hidden");
                         celineControls.classList.remove("hidden");
                     }
                 } else {
@@ -583,7 +535,6 @@
             });
 
             document.getElementById("celine-update-button").addEventListener("click", () => updateCoins("celine"));
-            document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
 
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
@@ -591,16 +542,6 @@
                 } else {
                     set(ref(db, 'coins'), { celine: 0 });
                     werte = { celine: 0 };
-                }
-                render();
-            });
-            
-            onValue(ref(db, 'individual_ziels'), (snapshot) => {
-                if (snapshot.exists()) {
-                    individuelleZiele = snapshot.val();
-                } else {
-                    set(ref(db, 'individual_ziels'), { celine: 0 });
-                    individuelleZiele = { celine: 0 };
                 }
                 render();
             });
