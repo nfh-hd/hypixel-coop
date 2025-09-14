@@ -22,7 +22,7 @@
             box-sizing: border-box;
         }
 
-        #login-toggle-button {
+        #login-toggle-button, #dashboard-button {
             position: fixed;
             top: 20px;
             left: 50%;
@@ -30,6 +30,10 @@
             z-index: 100;
         }
 
+        #dashboard-button {
+            top: 60px; /* Positioniert den Knopf 40px unter dem Login-Knopf */
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -265,12 +269,17 @@
             #login-toggle-button {
                 top: 10px;
             }
+            
+            #dashboard-button {
+                top: 50px;
+            }
         }
     </style>
 </head>
 
 <body>
     <button id="login-toggle-button">Login</button>
+    <button id="dashboard-button">Zum Dashboard</button>
     
     <div id="login-modal" class="modal hidden">
         <div class="modal-content">
@@ -370,6 +379,7 @@
             const passwordInput = document.getElementById("password");
             const loginButton = document.getElementById("login-button");
             const feedbackElement = document.getElementById("feedback");
+            const dashboardButton = document.getElementById("dashboard-button"); // Neuer Button
             
             const modalContent = document.querySelector(".modal-content");
 
@@ -402,6 +412,12 @@
                     emailInput.value = "";
                     passwordInput.value = "";
                 }
+            });
+            
+            dashboardButton.addEventListener("click", () => {
+                // Hier fügst du die Logik für den Dashboard-Button ein
+                // Zum Beispiel eine Weiterleitung auf eine andere URL
+                window.location.href = "https://example.com/dashboard"; // Passe die URL an
             });
 
             function formatNumber(n) {
