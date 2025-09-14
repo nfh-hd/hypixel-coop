@@ -105,7 +105,6 @@
             image-rendering: pixelated;
         }
         
-        /* Neuer Style für die Item-Eingabe */
         .item-input-row {
             display: flex;
             flex-wrap: wrap;
@@ -120,7 +119,6 @@
             padding: 8px;
         }
 
-        /* Neuer Style für die Item-Liste */
         .item-list {
             display: flex;
             flex-direction: column;
@@ -152,9 +150,61 @@
             font-size: 10px;
             margin: 0;
         }
+        
+        /* Neuer Style für den Login-Bereich */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #1c1c1c;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        .modal .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal .close-button:hover,
+        .modal .close-button:focus {
+            color: #fff;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="login-area" class="login-controls">
+                <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
+                <input type="password" id="password-input" placeholder="Admin Passwort" />
+                <button id="login-button">Login</button>
+                <div id="feedback"></div>
+            </div>
+        </div>
+    </div>
     <div class="page-container">
         <a href="index.html">
             <button>Dashboard</button>
@@ -182,10 +232,10 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        // WICHTIG: NEUE IMPORTS FÜR onValue und remove
         import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        // NEU: Imports für die Authentifizierung
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-        // Firebase-Konfiguration von deiner coins.html-Datei übernommen
         const firebaseConfig = {
             apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
             authDomain: "hypixel-skyblock-coop.firebaseapp.com",
@@ -198,6 +248,12 @@
         
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        const auth = getAuth(app); // NEU: Auth-Instanz
+
+        const ADMINS = { // Übernommen aus der coins.html
+            "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
+            "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
+        };
 
         const itemNameInput = document.getElementById('itemNameInput');
         const itemPriceInput = document.getElementById('itemPriceInput');
@@ -206,23 +262,29 @@
         const itemList = document.getElementById('itemList');
         const pageTitle = document.querySelector('h1').textContent;
 
+        const loginModal = document.getElementById('login-modal');
+        const loginButton = document.getElementById('login-button');
+        const closeButton = document.querySelector('.modal .close-button');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const feedbackElement = document.getElementById('feedback');
+
+        let currentUser = null; // Variable, um den eingeloggten Nutzer zu speichern
+
         // Bestimmt den Benutzernamen aus dem Titel
         const user = pageTitle.includes("Niklas") ? "niklas" : "nico";
-        const itemsRef = ref(database, `items/${user}`);
 
         // Funktion zum Laden und Anzeigen der Items
         function renderItems(itemsData) {
-            // Alte Items löschen, bevor wir die neuen anzeigen
             const existingItems = itemList.querySelectorAll('.item-row:not(:first-child)');
             existingItems.forEach(item => item.remove());
 
-            // Durch die Daten iterieren und Items anzeigen
             if (itemsData) {
                 Object.keys(itemsData).forEach(key => {
                     const item = itemsData[key];
                     const newItemRow = document.createElement('div');
                     newItemRow.classList.add('item-row');
-                    newItemRow.setAttribute('data-key', key); // Speichert den Datenbank-Schlüssel
+                    newItemRow.setAttribute('data-key', key);
                     newItemRow.innerHTML = `
                         <span>${item.name}</span>
                         <span>${item.price} Coins</span>
@@ -236,6 +298,11 @@
 
         // Funktion zum Hinzufügen eines Items
         function addItem() {
+            if (!currentUser || ADMINS[currentUser.uid] !== user) { // NEU: Überprüfung, ob der richtige Admin eingeloggt ist
+                alert('Bitte log dich zuerst ein, um Items hinzuzufügen!');
+                return;
+            }
+
             const name = itemNameInput.value.trim();
             const price = itemPriceInput.value.trim();
             const quantity = itemQuantityInput.value.trim();
@@ -251,17 +318,15 @@
                 quantity: parseInt(quantity)
             };
 
-            // Speichert die Daten unter dem spezifischen Pfad für den Nutzer
+            const itemsRef = ref(database, `items/${user}`);
             push(itemsRef, itemData)
                 .then(() => {
                     console.log("Item erfolgreich gespeichert!");
-                    // Die onValue-Funktion kümmert sich um die Anzeige
                 })
                 .catch(error => {
                     console.error("Fehler beim Speichern:", error);
                 });
 
-            // Eingabefelder leeren
             itemNameInput.value = '';
             itemPriceInput.value = '';
             itemQuantityInput.value = '';
@@ -269,12 +334,15 @@
 
         // Funktion zum Löschen eines Items in der Datenbank
         itemList.addEventListener('click', function(event) {
+            if (!currentUser || ADMINS[currentUser.uid] !== user) { // NEU: Überprüfung, ob der richtige Admin eingeloggt ist
+                alert('Bitte log dich zuerst ein, um Items zu löschen!');
+                return;
+            }
             if (event.target.classList.contains('delete-button')) {
                 const itemRow = event.target.closest('.item-row');
                 const itemKey = itemRow.getAttribute('data-key');
                 const itemToDeleteRef = ref(database, `items/${user}/${itemKey}`);
                 
-                // Löscht das Item aus der Datenbank
                 remove(itemToDeleteRef)
                     .then(() => {
                         console.log("Item erfolgreich gelöscht!");
@@ -285,20 +353,57 @@
             }
         });
 
-        // Event-Listener für den Hinzufügen-Knopf
+        // Login-Logik
+        loginButton.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => {
+                    feedbackElement.textContent = 'Erfolgreich eingeloggt!';
+                    feedbackElement.style.color = '#00ff99';
+                    setTimeout(() => {
+                        loginModal.style.display = 'none';
+                    }, 1500);
+                })
+                .catch(error => {
+                    feedbackElement.textContent = 'Login fehlgeschlagen!';
+                    feedbackElement.style.color = '#ff6666';
+                    console.error('Login-Fehler:', error.message);
+                });
+        });
+
+        closeButton.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+
+        // Überwacht den Anmeldestatus
+        onAuthStateChanged(auth, (userState) => {
+            currentUser = userState;
+            if (currentUser && ADMINS[currentUser.uid] === user) {
+                console.log(`Eingeloggt als Admin: ${user}`);
+                const itemsRef = ref(database, `items/${user}`);
+                // Startet den onValue-Listener nur, wenn der richtige Admin eingeloggt ist
+                onValue(itemsRef, (snapshot) => {
+                    const items = snapshot.val();
+                    renderItems(items);
+                });
+                loginModal.style.display = 'none';
+            } else {
+                console.log('Kein Admin eingeloggt oder falscher Admin.');
+                // Zeigt das Login-Modal, wenn kein Admin eingeloggt ist
+                loginModal.style.display = 'flex';
+                // Leert die Liste, wenn man sich ausloggt
+                renderItems(null);
+            }
+        });
+
         addButton.addEventListener('click', addItem);
         
-        // Hinzufügen per Enter-Taste in den Feldern
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 addItem();
             }
-        });
-
-        // WICHTIG: Lädt die Items beim Seitenstart und aktualisiert sie automatisch
-        onValue(itemsRef, (snapshot) => {
-            const items = snapshot.val();
-            renderItems(items);
         });
     </script>
 </body>
