@@ -296,28 +296,13 @@
     
     <div class="card">
         <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
-        <div class="player-sections-container">
-            <div id="celine-section" class="player-section">
-                <h2>🪙 Celine</h2>
-                <div class="remaining" id="celine-value">0</div>
-                <div class="value" id="celine-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="celine-controls">
-                    <input type="text" id="celine-input" placeholder="Coins eingeben" />
-                    <select id="celine-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="celine-update-button">Ausführen</button>
-                </div>
-            </div>
-        </div>
+        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
@@ -340,9 +325,8 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            let werte = {
-                celine: 0
-            };
+            let itemTotal = 0;
+            let currentCoins = 0;
             let istAdmin = false;
             let istCeline = false;
             let currentAdminName = null;
@@ -409,88 +393,28 @@
                 const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
                 return `${rounded}${suffix}`;
             }
-
-            function parseWithSuffix(input) {
-                const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
-                const suffixes = {
-                    'k': 1000,
-                    'm': 1000000,
-                    'b': 1000000000,
-                    't': 1000000000000
-                };
-                const suffix = cleanedInput.slice(-1);
-                const value = parseFloat(cleanedInput);
-                
-                if (suffixes[suffix]) {
-                    return value * suffixes[suffix];
-                }
-                return value;
-            }
             
-            async function updateCoins(name) {
-                if (!istCeline) return;
-                const input = document.getElementById(`${name}-input`);
-                const actionSelect = document.getElementById(`${name}-action-select`);
-                const action = actionSelect.value;
-                let val = parseWithSuffix(input.value);
-
-                if (isNaN(val) || val < 0) {
-                    feedbackElement.textContent = "Ungültige Eingabe!";
-                    feedbackElement.style.color = "#ff6666";
-                    return;
-                }
-                
-                const snapshot = await get(ref(db, `coins/${name}`));
-                let currentValue = snapshot.exists() ? snapshot.val() : 0;
-
-                if (action === 'add') {
-                    currentValue += val;
-                } else if (action === 'remove') {
-                    currentValue -= val;
-                    if (currentValue < 0) currentValue = 0;
-                } else if (action === 'set') {
-                    currentValue = val;
-                }
-
-                input.value = "";
-                
-                try {
-                    await set(ref(db, `coins/${name}`), currentValue);
-                    console.log(`Daten für ${name} erfolgreich in Firebase gespeichert.`);
-                } catch (error) {
-                    console.error("Fehler beim Speichern in Firebase:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
-                    feedbackElement.style.color = "#ff6666";
-                }
-            }
-
             function render() {
-                const totalCoins = (werte.celine || 0);
-                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
-                
-                ["celine"].forEach(name => {
-                    const valueElement = document.getElementById(`${name}-value`);
-                    valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
-                });
+                const coinsVerbleibend = itemTotal - currentCoins;
 
-                const celineControls = document.getElementById("celine-controls");
-                celineControls.classList.add("hidden");
+                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(itemTotal)} (${formatWithSuffix(itemTotal)})`;
+                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
 
                 if (istAdmin) {
                     loginToggleButton.textContent = "Logout";
-                    if (istCeline) {
-                        celineControls.classList.remove("hidden");
-                    }
                 } else {
                     loginToggleButton.textContent = "Login";
                 }
             }
             
-            function login() {
+            loginButton.addEventListener("click", () => {
                 const email = emailInput.value;
                 const pw = passwordInput.value;
                 
-                signInWithEmailAndPassword(auth, email, pw)
+                setPersistence(auth, browserLocalPersistence)
+                    .then(() => {
+                        return signInWithEmailAndPassword(auth, email, pw);
+                    })
                     .then(() => {
                         feedbackElement.textContent = "Erfolgreich eingeloggt!";
                         feedbackElement.style.color = "#00ff99";
@@ -504,7 +428,7 @@
                         feedbackElement.style.color = "#ff6666";
                         console.error("Login-Fehler:", error.message);
                     });
-            }
+            });
 
             function logout() {
                 signOut(auth).then(() => {
@@ -517,8 +441,6 @@
                     console.error("Logout-Fehler:", error.message);
                 });
             }
-            
-            loginButton.addEventListener("click", login);
             
             onAuthStateChanged(auth, async (user) => {
                 if (user && ADMINS[user.uid]) {
@@ -534,14 +456,28 @@
                 render();
             });
 
-            document.getElementById("celine-update-button").addEventListener("click", () => updateCoins("celine"));
-
-            onValue(ref(db, 'coins'), (snapshot) => {
+            onValue(ref(db, 'items/celine'), (snapshot) => {
                 if (snapshot.exists()) {
-                    werte = snapshot.val();
+                    let total = 0;
+                    const items = snapshot.val();
+                    for (const itemId in items) {
+                        const item = items[itemId];
+                        if (item.price && item.quantity) {
+                            total += item.price * item.quantity;
+                        }
+                    }
+                    itemTotal = total;
                 } else {
-                    set(ref(db, 'coins'), { celine: 0 });
-                    werte = { celine: 0 };
+                    itemTotal = 0;
+                }
+                render();
+            });
+
+            onValue(ref(db, 'coins/celine'), (snapshot) => {
+                if (snapshot.exists()) {
+                    currentCoins = snapshot.val();
+                } else {
+                    currentCoins = 0;
                 }
                 render();
             });
