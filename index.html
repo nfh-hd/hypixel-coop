@@ -1,9 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hypixel SkyBlock Ziel-Counter</title>
+    <title>Hypixel SkyBlock Dashboard</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -20,14 +20,89 @@
             overflow: auto;
             padding: 20px;
             box-sizing: border-box;
+            text-align: center;
         }
 
-        #login-toggle-button {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
+        .hidden {
+            display: none;
+        }
+
+        .page-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .card {
+            background: rgba(15, 15, 15, 0.9);
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 12px rgba(255, 215, 0, 0.2);
+            width: fit-content;
+            max-width: 90%;
+            border: 2px solid #ffd700;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
+            font-size: 25px;
+        }
+        
+        h2 {
+            margin: 20px 0 5px;
+            color: #ffcc33;
+            text-shadow: 0 0 6px #ffaa00;
+            font-size: 18px;
+        }
+
+        .total-coins {
+            font-size: 22px;
+            font-weight: bold;
+            color: #00ff99;
+            text-shadow: 0 0 8px #00ff99;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+
+        .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 4px #ffd700;
+            margin-top: 2px;
+        }
+        
+        .remaining {
+            font-size: 20px;
+            color: #ffecb3;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 2px solid #111;
+            cursor: pointer;
+            background: linear-gradient(180deg, #ffdd44, #ff9900);
+            color: #111;
+            font-weight: bold;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            text-shadow: 0 0 4px #ffd700;
+            transition: transform 0.1s, box-shadow 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
         }
 
         .modal {
@@ -69,142 +144,28 @@
             color: #fff;
             text-decoration: none;
         }
-        
-        .card {
-            position: relative;
-            z-index: 1;
-            background: rgba(15, 15, 15, 0.9);
-            padding: 28px;
-            border-radius: 16px;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 12px rgba(255, 215, 0, 0.2);
-            width: fit-content;
-            max-width: 90%;
-            text-align: center;
-            border: 2px solid #ffd700;
+
+        #login-toggle-button, #back-button {
+            position: fixed;
+            top: 20px;
+            z-index: 100;
+        }
+
+        #login-toggle-button {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #back-button {
+            left: 20px;
+        }
+
+        .main-button-container {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-
-        h1 {
-            margin-bottom: 10px;
-            color: #ffd700;
-            text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
-            font-size: 25px;
-        }
-
-        h2 {
-            margin: 20px 0 5px;
-            color: #ffcc33;
-            text-shadow: 0 0 6px #ffaa00;
-            font-size: 18px;
-        }
-
-        .total-coins {
-            font-size: 22px;
-            font-weight: bold;
-            color: #00ff99;
-            text-shadow: 0 0 8px #00ff99;
-            margin-top: 15px;
-            margin-bottom: 30px;
-        }
-
-        .value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ffffff;
-            text-shadow: 0 0 4px #ffd700;
-            margin-top: 2px;
-        }
-
-        .controls {
-            margin-top: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        input[type="number"] {
-            padding: 10px;
-            border-radius: 6px;
-            border: 2px solid #ffd700;
-            background: #1c1c1c;
-            color: #e6eef8;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            width: 200px;
-            text-align: center;
-        }
         
-        #password {
-            width: 250px;
-            margin-right: 8px;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 10px;
-        }
-        
-        #email-input {
-            width: 250px;
-            margin-right: 8px;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 10px;
-        }
-
-        .login-controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        button {
-            padding: 10px 14px;
-            border-radius: 6px;
-            border: 2px solid #111;
-            cursor: pointer;
-            background: linear-gradient(180deg, #ffdd44, #ff9900);
-            color: #111;
-            font-weight: bold;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
-            text-shadow: 0 0 4px #ffd700;
-            transition: transform 0.1s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
-        }
-
-        button.minus {
-            background: linear-gradient(180deg, #e63939, #a83232);
-            color: #fff;
-            text-shadow: 0 0 4px #000;
-        }
-
-        .remaining {
-            font-size: 20px;
-            color: #ffecb3;
-            margin-top: 10px;
-        }
-
-        #login-area {
-            margin-bottom: 20px;
-        }
-
-        #feedback {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #ff6666;
-        }
-
-        .hidden {
-            display: none;
-        }
-
         .player-sections-container {
             display: flex;
             justify-content: center;
@@ -225,105 +186,137 @@
         .player-section .controls {
             flex-direction: row;
             justify-content: center;
-        }
-        
-        .ziel-input-container {
-            margin-top: 15px;
+            margin-top: 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
             align-items: center;
+            gap: 8px;
         }
 
-        .ziel-input-container input {
+        .controls input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 2px solid #ffd700;
+            background: #1c1c1c;
+            color: #e6eef8;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
             width: 200px;
+            text-align: center;
+        }
+        
+        .controls button.minus {
+            background: linear-gradient(180deg, #e63939, #a83232);
+            color: #fff;
+            text-shadow: 0 0 4px #000;
         }
 
-        /* Responsive Design für kleinere Bildschirme */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
+        #ziel-bearbeiten-bereich {
+            margin-top: 15px;
+        }
 
-            .player-sections-container {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .card {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .total-coins {
-                font-size: 18px;
-            }
-            
-            #login-toggle-button {
-                top: 10px;
-            }
+        #feedback {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #ff6666;
         }
     </style>
 </head>
-
 <body>
+
     <button id="login-toggle-button">Login</button>
-    
+    <button id="back-button" class="hidden">Zurück</button>
+
     <div id="login-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <div id="login-area" class="login-controls">
-                <h2>Admin Login</h2>
-                <input type="email" id="email-input" placeholder="Admin E-Mail" />
-                <input type="password" id="password" placeholder="Admin Passwort" />
-                <button id="login-button">Login</button>
-                <div id="feedback"></div>
+            <h2>Admin Login</h2>
+            <input type="email" id="email-input" placeholder="Admin E-Mail" />
+            <input type="password" id="password" placeholder="Admin Passwort" />
+            <button id="login-button">Login</button>
+            <div id="feedback-login"></div>
+        </div>
+    </div>
+
+    <div id="item-manager-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Items verwalten für...</h2>
+            <button onclick="window.location.hash = '#nico-items'">Nico</button>
+            <button onclick="window.location.hash = '#niklas-items'">Niklas</button>
+        </div>
+    </div>
+
+    <!-- MAIN PAGE -->
+    <div id="main-page" class="page-container">
+        <div class="card">
+            <h1>Hypixel SkyBlock Dashboard</h1>
+            <p id="welcome-message">Willkommen, Gast!</p>
+            <div class="main-button-container">
+                <button onclick="window.location.hash = '#coins'">💰 COOP Coins Counter</button>
+                <button id="item-manager-button" class="hidden">📦 Item-Manager</button>
             </div>
         </div>
     </div>
-    
-    <div class="card">
-        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
-        <div id="ziel-bearbeiten-bereich" class="hidden">
-            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
-            <button id="ziel-speichern-button">Ziel festlegen</button>
+
+    <!-- COINS PAGE -->
+    <div id="coins-page" class="page-container hidden">
+        <div class="card">
+            <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
+            <div id="ziel-bearbeiten-bereich" class="hidden">
+                <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
+                <button id="ziel-speichern-button">Ziel festlegen</button>
+            </div>
+            <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
+            <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
+
+            <div class="player-sections-container">
+                <div id="nico-section" class="player-section">
+                    <h2>🪙 Nico</h2>
+                    <div class="remaining" id="nico-value">0</div>
+                    <div class="value" id="nico-remaining">Verbleibend: 0</div>
+                    <div class="controls hidden" id="nico-controls">
+                        <input type="text" id="nico-input" placeholder="Coins eingeben" />
+                        <select id="nico-action-select">
+                            <option value="add">Hinzufügen</option>
+                            <option value="remove">Entfernen</option>
+                            <option value="set">Setzen</option>
+                        </select>
+                        <button id="nico-update-button">Ausführen</button>
+                    </div>
+                </div>
+
+                <div id="niklas-section" class="player-section">
+                    <h2>🪙 Niklas</h2>
+                    <div class="remaining" id="niklas-value">0</div>
+                    <div class="value" id="niklas-remaining">Verbleibend: 0</div>
+                    <div class="controls hidden" id="niklas-controls">
+                        <input type="text" id="niklas-input" placeholder="Coins eingeben" />
+                        <select id="niklas-action-select">
+                            <option value="add">Hinzufügen</option>
+                            <option value="remove">Entfernen</option>
+                            <option value="set">Setzen</option>
+                        </select>
+                        <button id="niklas-update-button">Ausführen</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
-        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
+    </div>
 
-        <div class="player-sections-container">
-            <div id="nico-section" class="player-section">
-                <h2>🪙 Nico</h2>
-                <div class="remaining" id="nico-value">0</div>
-                <div class="value" id="nico-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="nico-controls">
-                    <input type="text" id="nico-input" placeholder="Coins eingeben" />
-                    <select id="nico-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="nico-update-button">Ausführen</button>
-                </div>
-            </div>
+    <!-- NICO ITEMS PAGE -->
+    <div id="nico-items-page" class="page-container hidden">
+        <div class="card">
+            <h1>Nicos Item-Manager</h1>
+            <p>Hier kommt der Inhalt für Nicos Items hin.</p>
+        </div>
+    </div>
 
-            <div id="niklas-section" class="player-section">
-                <h2>🪙 Niklas</h2>
-                <div class="remaining" id="niklas-value">0</div>
-                <div class="value" id="niklas-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="niklas-controls">
-                    <input type="text" id="niklas-input" placeholder="Coins eingeben" />
-                    <select id="niklas-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="niklas-update-button">Ausführen</button>
-                </div>
-            </div>
+    <!-- NIKLAS ITEMS PAGE -->
+    <div id="niklas-items-page" class="page-container hidden">
+        <div class="card">
+            <h1>Niklas' Item-Manager</h1>
+            <p>Hier kommt der Inhalt für Niklas' Items hin.</p>
         </div>
     </div>
 
@@ -332,283 +325,245 @@
         import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
+        // Konfiguration deiner Firebase-App
         const firebaseConfig = {
-          apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
-          authDomain: "hypixel-skyblock-coop.firebaseapp.com",
-          databaseURL: "https://hypixel-skyblock-coop-default-rtdb.europe-west1.firebasedatabase.app",
-          projectId: "hypixel-skyblock-coop",
-          storageBucket: "hypixel-skyblock-coop.firebasestorage.app",
-          messagingSenderId: "918414851042",
-          appId: "1:918414851042:web:65822393d076675386d7bb"
+            apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
+            authDomain: "hypixel-skyblock-coop.firebaseapp.com",
+            databaseURL: "https://hypixel-skyblock-coop-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "hypixel-skyblock-coop",
+            storageBucket: "hypixel-skyblock-coop.firebasestorage.app",
+            messagingSenderId: "918414851042",
+            appId: "1:918414851042:web:65822393d076675386d7bb"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
 
+        // Mapping von Firebase UID zu Spielernamen
         const ADMINS = {
             "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
             "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
         };
+        
+        let werte = { nico: 0, niklas: 0 };
+        let individuelleZiele = { nico: 0, niklas: 0 };
+        let istAdmin = false;
+        let currentAdminName = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            let werte = {
-                nico: 0,
-                niklas: 0
-            };
-            let individuelleZiele = {
-                nico: 0,
-                niklas: 0
-            };
-            let istAdmin = false;
-            let currentAdminName = null;
-            
-            const loginToggleButton = document.getElementById("login-toggle-button");
-            const loginModal = document.getElementById("login-modal");
-            const closeButton = document.querySelector(".modal .close-button");
-            const emailInput = document.getElementById("email-input");
-            const passwordInput = document.getElementById("password");
-            const loginButton = document.getElementById("login-button");
-            const feedbackElement = document.getElementById("feedback");
-            
-            const modalContent = document.querySelector(".modal-content");
+        // --- DOM-Elemente ---
+        const loginToggleButton = document.getElementById("login-toggle-button");
+        const backButton = document.getElementById("back-button");
+        const loginModal = document.getElementById("login-modal");
+        const itemManagerModal = document.getElementById("item-manager-modal");
+        const closeButtons = document.querySelectorAll(".modal .close-button");
+        const emailInput = document.getElementById("email-input");
+        const passwordInput = document.getElementById("password");
+        const loginButton = document.getElementById("login-button");
+        const feedbackLogin = document.getElementById("feedback-login");
+        const itemManagerButton = document.getElementById("item-manager-button");
+        const zielSpeichernButton = document.getElementById("ziel-speichern-button");
 
-            modalContent.addEventListener("click", (e) => {
-                e.stopPropagation();
-            });
-            
-            loginToggleButton.addEventListener("click", () => {
-                if (istAdmin) {
-                    logout();
-                } else {
-                    loginModal.classList.remove("hidden");
-                    feedbackElement.textContent = "";
-                    emailInput.value = "";
-                    passwordInput.value = "";
-                }
-            });
+        const pages = {
+            '#main': document.getElementById('main-page'),
+            '#coins': document.getElementById('coins-page'),
+            '#nico-items': document.getElementById('nico-items-page'),
+            '#niklas-items': document.getElementById('niklas-items-page')
+        };
+        
+        // --- Hilfsfunktionen ---
+        function formatNumber(n) {
+            if (n === null || n === undefined) return '0';
+            return n.toLocaleString('de-DE');
+        }
 
-            closeButton.addEventListener("click", () => {
-                loginModal.classList.add("hidden");
-                feedbackElement.textContent = "";
-                emailInput.value = "";
-                passwordInput.value = "";
-            });
-            
-            window.addEventListener("click", (event) => {
-                if (event.target === loginModal) {
-                    loginModal.classList.add("hidden");
-                    feedbackElement.textContent = "";
-                    emailInput.value = "";
-                    passwordInput.value = "";
-                }
-            });
+        function formatWithSuffix(n) {
+            if (n === null || n === undefined) return '0';
+            if (n < 1000) return n.toLocaleString('de-DE');
+            const suffixes = ["", "k", "m", "b", "t", "q"];
+            const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
+            const suffix = suffixes[tier];
+            const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
+            return `${rounded}${suffix}`;
+        }
 
-            function formatNumber(n) {
-                if (n === null || n === undefined) return '0';
-                return n.toLocaleString('de-DE');
+        function parseWithSuffix(input) {
+            const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
+            const suffixes = { 'k': 1e3, 'm': 1e6, 'b': 1e9, 't': 1e12 };
+            const suffix = cleanedInput.slice(-1);
+            const value = parseFloat(cleanedInput);
+            if (suffixes[suffix]) return value * suffixes[suffix];
+            return value;
+        }
+
+        // --- Hauptfunktionen ---
+        function renderPage() {
+            const hash = window.location.hash || '#main';
+            backButton.classList.add('hidden');
+            
+            for (const page in pages) {
+                pages[page].classList.add('hidden');
             }
 
-            function formatWithSuffix(n) {
-                if (n === null || n === undefined) return '0';
-                if (n < 1000) {
-                    return n.toLocaleString('de-DE');
+            if (pages[hash]) {
+                pages[hash].classList.remove('hidden');
+                if (hash !== '#main') {
+                    backButton.classList.remove('hidden');
                 }
-                const suffixes = ["", "k", "m", "b", "t", "q"];
-                const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
-                const suffix = suffixes[tier];
-                const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
-                return `${rounded}${suffix}`;
+            } else {
+                pages['#main'].classList.remove('hidden');
             }
 
-            function parseWithSuffix(input) {
-                const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
-                const suffixes = {
-                    'k': 1000,
-                    'm': 1000000,
-                    'b': 1000000000,
-                    't': 1000000000000
-                };
-                const suffix = cleanedInput.slice(-1);
-                const value = parseFloat(cleanedInput);
+            // Spezial-Logik für die Coins-Seite
+            if (hash === '#coins') {
+                renderCoinsPage();
+            }
+        }
+        
+        function renderCoinsPage() {
+            const totalZiel = (individuelleZiele.nico || 0) + (individuelleZiele.niklas || 0);
+            const totalCoins = (werte.nico || 0) + (werte.niklas || 0);
+
+            document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
+            document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
+            
+            const coinsVerbleibend = totalZiel - totalCoins;
+            document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
+
+            ["nico", "niklas"].forEach(name => {
+                const valueElement = document.getElementById(`${name}-value`);
+                const remainingElement = document.getElementById(`${name}-remaining`);
                 
-                if (suffixes[suffix]) {
-                    return value * suffixes[suffix];
-                }
-                return value;
-            }
-            
-            function updateZiel() {
-                if (!istAdmin) return;
-                const input = document.getElementById(`ziel-input`);
-                let neuesZiel = parseWithSuffix(input.value);
-
-                if (isNaN(neuesZiel) || neuesZiel < 0) {
-                    feedbackElement.textContent = "Ungültige Zieleingabe!";
-                    feedbackElement.style.color = "#ff6666";
-                    return;
-                }
-
-                input.value = "";
-                try {
-                    set(ref(db, `individual_ziels/${currentAdminName}`), neuesZiel);
-                    console.log(`Ziel für ${currentAdminName} erfolgreich gespeichert.`);
-                } catch (error) {
-                    console.error("Fehler beim Speichern des Ziels:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
-                    feedbackElement.style.color = "#ff6666";
-                }
-            }
-
-            async function updateCoins(name) {
-                if (!istAdmin) return;
-                const input = document.getElementById(`${name}-input`);
-                const actionSelect = document.getElementById(`${name}-action-select`);
-                const action = actionSelect.value;
-                let val = parseWithSuffix(input.value);
-
-                if (isNaN(val) || val < 0) {
-                    feedbackElement.textContent = "Ungültige Eingabe!";
-                    feedbackElement.style.color = "#ff6666";
-                    return;
-                }
+                valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
                 
-                const snapshot = await get(ref(db, `coins/${name}`));
-                let currentValue = snapshot.exists() ? snapshot.val() : 0;
-
-                if (action === 'add') {
-                    currentValue += val;
-                } else if (action === 'remove') {
-                    currentValue -= val;
-                    if (currentValue < 0) currentValue = 0;
-                } else if (action === 'set') {
-                    currentValue = val;
-                }
-
-                input.value = "";
-                
-                try {
-                    await set(ref(db, `coins/${name}`), currentValue);
-                    console.log(`Daten für ${name} erfolgreich in Firebase gespeichert.`);
-                } catch (error) {
-                    console.error("Fehler beim Speichern in Firebase:", error);
-                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
-                    feedbackElement.style.color = "#ff6666";
-                }
-            }
-
-            function render() {
-                const totalZiel = (individuelleZiele.nico || 0) + (individuelleZiele.niklas || 0);
-                const totalCoins = (werte.nico || 0) + (werte.niklas || 0);
-
-                document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
-                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
-                
-                const coinsVerbleibend = totalZiel - totalCoins;
-                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
-
-                ["nico", "niklas"].forEach(name => {
-                    const valueElement = document.getElementById(`${name}-value`);
-                    const remainingElement = document.getElementById(`${name}-remaining`);
-                    
-                    valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
-                    
-                    let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
-                    if (remaining < 0) remaining = 0;
-                    remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
-                });
-
-                const nicoControls = document.getElementById("nico-controls");
-                const niklasControls = document.getElementById("niklas-controls");
-                const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
-
-                nicoControls.classList.add("hidden");
-                niklasControls.classList.add("hidden");
-                zielBearbeitenBereich.classList.add("hidden");
-
-                if (istAdmin) {
-                    loginToggleButton.textContent = "Logout";
-                    zielBearbeitenBereich.classList.remove("hidden");
-                    if (currentAdminName === "nico") {
-                        nicoControls.classList.remove("hidden");
-                    } else if (currentAdminName === "niklas") {
-                        niklasControls.classList.remove("hidden");
-                    }
-                } else {
-                    loginToggleButton.textContent = "Login";
-                }
-            }
-            
-            function login() {
-                const email = emailInput.value;
-                const pw = passwordInput.value;
-                
-                signInWithEmailAndPassword(auth, email, pw)
-                    .then(() => {
-                        feedbackElement.textContent = "Erfolgreich eingeloggt!";
-                        feedbackElement.style.color = "#00ff99";
-                        setTimeout(() => {
-                            feedbackElement.textContent = "";
-                        }, 1500);
-                        loginModal.classList.add("hidden");
-                    })
-                    .catch((error) => {
-                        feedbackElement.textContent = "Login fehlgeschlagen!";
-                        feedbackElement.style.color = "#ff6666";
-                        console.error("Login-Fehler:", error.message);
-                    });
-            }
-
-            function logout() {
-                signOut(auth).then(() => {
-                    feedbackElement.textContent = "Erfolgreich abgemeldet!";
-                    feedbackElement.style.color = "#ffecb3";
-                    setTimeout(() => {
-                        feedbackElement.textContent = "";
-                    }, 1500);
-                }).catch((error) => {
-                    console.error("Logout-Fehler:", error.message);
-                });
-            }
-            
-            loginButton.addEventListener("click", login);
-            
-            onAuthStateChanged(auth, async (user) => {
-                if (user && ADMINS[user.uid]) {
-                    istAdmin = true;
-                    currentAdminName = ADMINS[user.uid];
-                    console.log(`Eingeloggt als Admin: ${currentAdminName}`);
-                } else {
-                    istAdmin = false;
-                    currentAdminName = null;
-                }
-                render();
+                let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
+                if (remaining < 0) remaining = 0;
+                remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
             });
 
-            document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
-            document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
-            document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
+            const nicoControls = document.getElementById("nico-controls");
+            const niklasControls = document.getElementById("niklas-controls");
+            const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
 
-            onValue(ref(db, 'coins'), (snapshot) => {
-                if (snapshot.exists()) {
-                    werte = snapshot.val();
-                } else {
-                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
-                    werte = { nico: 0, niklas: 0 };
+            nicoControls.classList.add("hidden");
+            niklasControls.classList.add("hidden");
+            zielBearbeitenBereich.classList.add("hidden");
+
+            if (istAdmin) {
+                zielBearbeitenBereich.classList.remove("hidden");
+                if (currentAdminName === "nico") {
+                    nicoControls.classList.remove("hidden");
+                } else if (currentAdminName === "niklas") {
+                    niklasControls.classList.remove("hidden");
                 }
-                render();
-            });
-            
-            onValue(ref(db, 'individual_ziels'), (snapshot) => {
-                if (snapshot.exists()) {
-                    individuelleZiele = snapshot.val();
-                } else {
-                    set(ref(db, 'individual_ziels'), { nico: 0, niklas: 0 });
-                    individuelleZiele = { nico: 0, niklas: 0 };
-                }
-                render();
+            }
+        }
+
+        function renderUI() {
+            renderPage();
+            if (istAdmin) {
+                loginToggleButton.textContent = "Logout";
+                itemManagerButton.classList.remove('hidden');
+                document.getElementById('welcome-message').textContent = `Willkommen, ${currentAdminName}!`;
+            } else {
+                loginToggleButton.textContent = "Login";
+                itemManagerButton.classList.add('hidden');
+                document.getElementById('welcome-message').textContent = "Willkommen, Gast!";
+            }
+        }
+        
+        // --- Event Listener ---
+        loginToggleButton.addEventListener("click", () => {
+            if (istAdmin) {
+                signOut(auth);
+            } else {
+                loginModal.style.display = 'flex';
+            }
+        });
+
+        itemManagerButton.addEventListener("click", () => {
+            if (istAdmin) {
+                itemManagerModal.style.display = 'flex';
+            }
+        });
+
+        backButton.addEventListener("click", () => {
+            window.location.hash = '#main';
+        });
+
+        // Alle Modal-Schließ-Buttons
+        closeButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                btn.closest('.modal').style.display = 'none';
+                feedbackLogin.textContent = "";
             });
         });
+
+        loginButton.addEventListener("click", () => {
+            signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+                .then(() => {
+                    feedbackLogin.textContent = "Erfolgreich eingeloggt!";
+                    feedbackLogin.style.color = "#00ff99";
+                    setTimeout(() => loginModal.style.display = 'none', 1500);
+                })
+                .catch(error => {
+                    feedbackLogin.textContent = "Login fehlgeschlagen!";
+                    feedbackLogin.style.color = "#ff6666";
+                    console.error("Login-Fehler:", error.message);
+                });
+        });
+        
+        zielSpeichernButton.addEventListener("click", () => {
+            if (!istAdmin) return;
+            const neuesZiel = parseWithSuffix(document.getElementById('ziel-input').value);
+            if (isNaN(neuesZiel) || neuesZiel < 0) {
+                alert("Ungültige Zieleingabe!");
+                return;
+            }
+            set(ref(db, `individual_ziels/${currentAdminName}`), neuesZiel);
+        });
+
+        document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
+        document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
+        
+        async function updateCoins(name) {
+            if (!istAdmin) return;
+            const input = document.getElementById(`${name}-input`);
+            const actionSelect = document.getElementById(`${name}-action-select`);
+            const action = actionSelect.value;
+            let val = parseWithSuffix(input.value);
+            if (isNaN(val) || val < 0) {
+                alert("Ungültige Eingabe!");
+                return;
+            }
+            const snapshot = await get(ref(db, `coins/${name}`));
+            let currentValue = snapshot.exists() ? snapshot.val() : 0;
+            if (action === 'add') currentValue += val;
+            else if (action === 'remove') currentValue = Math.max(0, currentValue - val);
+            else if (action === 'set') currentValue = val;
+            input.value = "";
+            await set(ref(db, `coins/${name}`), currentValue);
+        }
+
+        // --- Firebase Live-Daten-Listener ---
+        onAuthStateChanged(auth, (user) => {
+            istAdmin = !!(user && ADMINS[user.uid]);
+            currentAdminName = istAdmin ? ADMINS[user.uid] : null;
+            renderUI();
+        });
+
+        onValue(ref(db, 'coins'), (snapshot) => {
+            werte = snapshot.exists() ? snapshot.val() : { nico: 0, niklas: 0 };
+            renderUI();
+        });
+        
+        onValue(ref(db, 'individual_ziels'), (snapshot) => {
+            individuelleZiele = snapshot.exists() ? snapshot.val() : { nico: 0, niklas: 0 };
+            renderUI();
+        });
+
+        window.addEventListener('hashchange', renderPage);
+        window.addEventListener('load', renderPage);
     </script>
 </body>
 </html>
