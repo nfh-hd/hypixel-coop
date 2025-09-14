@@ -144,6 +144,14 @@
         .item-row:last-child {
             border-bottom: none;
         }
+        
+        /* NEU: Schriftgröße für die Item-Daten dynamisch anpassen */
+        .item-row span {
+            font-size: clamp(8px, 2vw, 12px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         .delete-button {
             background: #ff4d4d;
