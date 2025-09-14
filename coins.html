@@ -22,74 +22,6 @@
             box-sizing: border-box;
         }
 
-        #dashboard-button {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 200;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: #2a2a2a;
-            padding: 20px;
-            border: 2px solid #fff;
-            border-radius: 10px;
-            text-align: center;
-            width: 80%;
-            max-width: 400px;
-            position: relative;
-        }
-
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .login-input {
-            width: 80%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ffcc00;
-            background: #444;
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
-        }
-
-        .login-button {
-            width: 80%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            background: linear-gradient(180deg, #ffdd44, #ff9900);
-            color: #111;
-            font-weight: bold;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 14px;
-        }
-
         .page-container {
             width: 100%;
             display: flex;
@@ -248,9 +180,9 @@
 <body>
     <div id="coins-page" class="page-container">
         <div class="page-header">
-            <button id="dashboard-button" onclick="window.location.href = 'index.html'">Dashboard</button>
+            <!-- Neuer Dashboard-Button -->
+            <button onclick="goToDashboard()">Dashboard</button>
         </div>
-        
         <div class="card coin-counter">
             <h1>Hypixel SkyBlock Ziel-Counter</h1>
             <div id="gesamter-betrag" class="counter-section">
@@ -292,19 +224,9 @@
         </div>
     </div>
     
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="toggleLoginModal()">&times;</span>
-            <h2>Admin Login</h2>
-            <input type="password" id="admin-passwort-eingabe" class="login-input" placeholder="Admin Passwort">
-            <button id="login-button" class="login-button">Login</button>
-            <p id="login-feedback"></p>
-        </div>
-    </div>
-    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
         import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
         // Firebase-Konfiguration
@@ -349,10 +271,11 @@
         const fortschrittsBalken = document.getElementById("fortschritts-balken");
         const fortschrittsText = document.getElementById("fortschritts-text");
         const feedbackAnzeige = document.getElementById("feedback");
-        const loginModal = document.getElementById("login-modal");
-        const loginButton = document.getElementById("login-button");
-        const adminPasswortEingabe = document.getElementById("admin-passwort-eingabe");
-        const loginFeedback = document.getElementById("login-feedback");
+
+        // Funktion zum Navigieren zum Dashboard
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
 
         // Funktionen zum Formatieren von Zahlen
         const formatNumber = (num) => {
@@ -419,44 +342,6 @@
                 }
             }
         };
-
-        // Funktion zum Öffnen/Schließen des Modals
-        function toggleLoginModal() {
-            if (loginModal.style.display === 'flex') {
-                loginModal.style.display = 'none';
-            } else {
-                loginModal.style.display = 'flex';
-            }
-        }
-        
-        loginButton.addEventListener("click", () => {
-            const passwort = adminPasswortEingabe.value;
-            const adminEmail = currentAdminName === 'nico' ? 'nico@test.com' : 'niklas@test.com'; // Dummy-E-Mail
-            
-            if (passwort) {
-                signInWithEmailAndPassword(auth, adminEmail, passwort)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        if (ADMINS[user.uid]) {
-                            loginFeedback.textContent = "Login erfolgreich!";
-                            loginFeedback.style.color = "#00ff99";
-                            toggleLoginModal(); // Schließt Modal bei Erfolg
-                        } else {
-                            signOut(auth);
-                            loginFeedback.textContent = "Ungültige Anmeldedaten!";
-                            loginFeedback.style.color = "#ff6666";
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Login-Fehler:", error);
-                        loginFeedback.textContent = "Falsches Passwort oder Benutzername!";
-                        loginFeedback.style.color = "#ff6666";
-                    });
-            } else {
-                loginFeedback.textContent = "Bitte Passwort eingeben.";
-                loginFeedback.style.color = "#ff6666";
-            }
-        });
 
         nicoSpeichernBtn.addEventListener("click", () => updateCoins('nico', nicoEingabe.value));
         niklasSpeichernBtn.addEventListener("click", () => updateCoins('niklas', niklasEingabe.value));
