@@ -182,8 +182,10 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        // WICHTIG: NEUE IMPORTS FÜR onValue und remove
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
+        // Firebase-Konfiguration von deiner coins.html-Datei übernommen
         const firebaseConfig = {
             apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
             authDomain: "hypixel-skyblock-coop.firebaseapp.com",
@@ -202,7 +204,37 @@
         const itemQuantityInput = document.getElementById('itemQuantityInput');
         const addButton = document.getElementById('addButton');
         const itemList = document.getElementById('itemList');
+        const pageTitle = document.querySelector('h1').textContent;
 
+        // Bestimmt den Benutzernamen aus dem Titel
+        const user = pageTitle.includes("Niklas") ? "niklas" : "nico";
+        const itemsRef = ref(database, `items/${user}`);
+
+        // Funktion zum Laden und Anzeigen der Items
+        function renderItems(itemsData) {
+            // Alte Items löschen, bevor wir die neuen anzeigen
+            const existingItems = itemList.querySelectorAll('.item-row:not(:first-child)');
+            existingItems.forEach(item => item.remove());
+
+            // Durch die Daten iterieren und Items anzeigen
+            if (itemsData) {
+                Object.keys(itemsData).forEach(key => {
+                    const item = itemsData[key];
+                    const newItemRow = document.createElement('div');
+                    newItemRow.classList.add('item-row');
+                    newItemRow.setAttribute('data-key', key); // Speichert den Datenbank-Schlüssel
+                    newItemRow.innerHTML = `
+                        <span>${item.name}</span>
+                        <span>${item.price} Coins</span>
+                        <span>${item.quantity}</span>
+                        <button class="delete-button">Löschen</button>
+                    `;
+                    itemList.appendChild(newItemRow);
+                });
+            }
+        }
+
+        // Funktion zum Hinzufügen eines Items
         function addItem() {
             const name = itemNameInput.value.trim();
             const price = itemPriceInput.value.trim();
@@ -215,40 +247,58 @@
 
             const itemData = {
                 name: name,
-                price: price,
-                quantity: quantity
+                price: parseFloat(price),
+                quantity: parseInt(quantity)
             };
 
-            const itemsRef = ref(database, 'items');
-            push(itemsRef, itemData);
+            // Speichert die Daten unter dem spezifischen Pfad für den Nutzer
+            push(itemsRef, itemData)
+                .then(() => {
+                    console.log("Item erfolgreich gespeichert!");
+                    // Die onValue-Funktion kümmert sich um die Anzeige
+                })
+                .catch(error => {
+                    console.error("Fehler beim Speichern:", error);
+                });
 
-            const newItemRow = document.createElement('div');
-            newItemRow.classList.add('item-row');
-            newItemRow.innerHTML = `
-                <span>${name}</span>
-                <span>${price} Coins</span>
-                <span>${quantity}</span>
-                <button class="delete-button">Löschen</button>
-            `;
-            itemList.appendChild(newItemRow);
-
+            // Eingabefelder leeren
             itemNameInput.value = '';
             itemPriceInput.value = '';
             itemQuantityInput.value = '';
         }
 
+        // Funktion zum Löschen eines Items in der Datenbank
         itemList.addEventListener('click', function(event) {
             if (event.target.classList.contains('delete-button')) {
-                event.target.closest('.item-row').remove();
+                const itemRow = event.target.closest('.item-row');
+                const itemKey = itemRow.getAttribute('data-key');
+                const itemToDeleteRef = ref(database, `items/${user}/${itemKey}`);
+                
+                // Löscht das Item aus der Datenbank
+                remove(itemToDeleteRef)
+                    .then(() => {
+                        console.log("Item erfolgreich gelöscht!");
+                    })
+                    .catch(error => {
+                        console.error("Fehler beim Löschen:", error);
+                    });
             }
         });
 
+        // Event-Listener für den Hinzufügen-Knopf
         addButton.addEventListener('click', addItem);
         
+        // Hinzufügen per Enter-Taste in den Feldern
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 addItem();
             }
+        });
+
+        // WICHTIG: Lädt die Items beim Seitenstart und aktualisiert sie automatisch
+        onValue(itemsRef, (snapshot) => {
+            const items = snapshot.val();
+            renderItems(items);
         });
     </script>
 </body>
