@@ -262,7 +262,28 @@
                 font-size: 18px;
             }
             
-            <button id="dashboard-button" onclick="goToDashboard()">Dashboard</button>
+            #login-toggle-button {
+                top: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button id="login-toggle-button">Login</button>
+    
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="login-area" class="login-controls">
+                <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
+                <input type="password" id="password" placeholder="Admin Passwort" />
+                <button id="login-button">Login</button>
+                <div id="feedback"></div>
+            </div>
+        </div>
+    </div>
     
     <div class="card">
         <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
@@ -329,7 +350,6 @@
             "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
             "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
         };
-        
 
         document.addEventListener('DOMContentLoaded', () => {
             let werte = {
@@ -564,9 +584,6 @@
                 }
                 render();
             });
-            function goToDashboard() {
-    window.location.href = 'index.html'; // Oder der Name deiner Dashboard-Datei
-};
 
             document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
             document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
