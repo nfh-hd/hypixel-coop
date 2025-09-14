@@ -343,7 +343,7 @@
             itemQuantityInput.value = '';
         }
 
-        itemList.addEventListener('click', function(event) {
+        itemList.addEventListener('click', async function(event) {
             if (!currentUser || ADMINS[currentUser.uid] !== user) {
                 alert('Bitte log dich zuerst ein, um Items zu löschen!');
                 return;
@@ -351,9 +351,30 @@
             if (event.target.classList.contains('delete-button')) {
                 const itemRow = event.target.closest('.item-row');
                 const itemKey = itemRow.getAttribute('data-key');
-                const itemToDeleteRef = ref(database, `items/${user}/${itemKey}`);
                 
-                remove(itemToDeleteRef)
+                // NEUE LOGIK: Item-Daten vor dem Löschen abrufen
+                const itemRef = ref(database, `items/${user}/${itemKey}`);
+                const itemSnapshot = await get(itemRef);
+                const itemData = itemSnapshot.val();
+
+                if (itemData) {
+                    const totalCost = itemData.price * itemData.quantity;
+                    const zielsRef = ref(database, `individual_ziels/${user}`);
+                    
+                    try {
+                        const zielSnapshot = await get(zielsRef);
+                        const currentZiel = zielSnapshot.val() || 0;
+                        const newZiel = Math.max(0, currentZiel - totalCost); // Verhindert negative Werte
+
+                        await update(ref(database, 'individual_ziels'), { [user]: newZiel });
+                        console.log("Ziel nach Löschung erfolgreich aktualisiert!");
+                    } catch (error) {
+                        console.error("Fehler beim Aktualisieren des Ziels:", error);
+                    }
+                }
+                
+                // Jetzt das Item selbst löschen
+                remove(itemRef)
                     .then(() => {
                         console.log("Item erfolgreich gelöscht!");
                     })
