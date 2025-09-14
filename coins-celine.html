@@ -318,36 +318,6 @@
                     <button id="celine-update-button">Ausführen</button>
                 </div>
             </div>
-
-            <div id="niklas-section" class="player-section">
-                <h2>🪙 Niklas</h2>
-                <div class="remaining" id="niklas-value">0</div>
-                <div class="value" id="niklas-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="niklas-controls">
-                    <input type="text" id="niklas-input" placeholder="Coins eingeben" />
-                    <select id="niklas-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="niklas-update-button">Ausführen</button>
-                </div>
-            </div>
-
-            <div id="nico-section" class="player-section">
-                <h2>🪙 Nico</h2>
-                <div class="remaining" id="nico-value">0</div>
-                <div class="value" id="nico-remaining">Verbleibend: 0</div>
-                <div class="controls hidden" id="nico-controls">
-                    <input type="text" id="nico-input" placeholder="Coins eingeben" />
-                    <select id="nico-action-select">
-                        <option value="add">Hinzufügen</option>
-                        <option value="remove">Entfernen</option>
-                        <option value="set">Setzen</option>
-                    </select>
-                    <button id="nico-update-button">Ausführen</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -378,14 +348,10 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             let werte = {
-                celine: 0,
-                niklas: 0,
-                nico: 0
+                celine: 0
             };
             let individuelleZiele = {
-                celine: 0,
-                niklas: 0,
-                nico: 0
+                celine: 0
             };
             let istAdmin = false;
             let istCeline = false;
@@ -531,8 +497,8 @@
             }
 
             function render() {
-                const totalZiel = (individuelleZiele.celine || 0) + (individuelleZiele.niklas || 0) + (individuelleZiele.nico || 0);
-                const totalCoins = (werte.celine || 0) + (werte.niklas || 0) + (werte.nico || 0);
+                const totalZiel = (individuelleZiele.celine || 0);
+                const totalCoins = (werte.celine || 0);
 
                 document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
                 document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
@@ -540,7 +506,7 @@
                 const coinsVerbleibend = totalZiel - totalCoins;
                 document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
 
-                ["celine", "niklas", "nico"].forEach(name => {
+                ["celine"].forEach(name => {
                     const valueElement = document.getElementById(`${name}-value`);
                     const remainingElement = document.getElementById(`${name}-remaining`);
                     
@@ -552,13 +518,9 @@
                 });
 
                 const celineControls = document.getElementById("celine-controls");
-                const niklasControls = document.getElementById("niklas-controls");
-                const nicoControls = document.getElementById("nico-controls");
                 const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
 
                 celineControls.classList.add("hidden");
-                niklasControls.classList.add("hidden");
-                nicoControls.classList.add("hidden");
                 zielBearbeitenBereich.classList.add("hidden");
 
                 if (istAdmin) {
@@ -621,16 +583,14 @@
             });
 
             document.getElementById("celine-update-button").addEventListener("click", () => updateCoins("celine"));
-            document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
-            document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
             document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
 
             onValue(ref(db, 'coins'), (snapshot) => {
                 if (snapshot.exists()) {
                     werte = snapshot.val();
                 } else {
-                    set(ref(db, 'coins'), { celine: 0, niklas: 0, nico: 0 });
-                    werte = { celine: 0, niklas: 0, nico: 0 };
+                    set(ref(db, 'coins'), { celine: 0 });
+                    werte = { celine: 0 };
                 }
                 render();
             });
@@ -639,8 +599,8 @@
                 if (snapshot.exists()) {
                     individuelleZiele = snapshot.val();
                 } else {
-                    set(ref(db, 'individual_ziels'), { celine: 0, niklas: 0, nico: 0 });
-                    individuelleZiele = { celine: 0, niklas: 0, nico: 0 };
+                    set(ref(db, 'individual_ziels'), { celine: 0 });
+                    individuelleZiele = { celine: 0 };
                 }
                 render();
             });
