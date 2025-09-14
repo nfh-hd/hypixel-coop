@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Catacombs XP Rechner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e2f;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .container {
+      background: #2a2a40;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: auto;
+    }
+    select, input, button {
+      margin: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      background: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #33334d;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Catacombs XP Rechner</h1>
 
+    <!-- Dungeon Floor Auswahl -->
+    <label for="floor">Dungeon Floor:</label>
+    <select id="floor">
+      <option value="500">F1 (500 XP)</option>
+      <option value="1000">F2 (1000 XP)</option>
+      <option value="1500">F3 (1500 XP)</option>
+      <option value="2500">F4 (2500 XP)</option>
+      <option value="4000">F5 (4000 XP)</option>
+      <option value="6000">F6 (6000 XP)</option>
+      <option value="10000">F7 (10000 XP)</option>
+      <option value="15000">M1 (15000 XP)</option>
+      <option value="20000">M2 (20000 XP)</option>
+      <option value="30000">M3 (30000 XP)</option>
+      <option value="40000">M4 (40000 XP)</option>
+      <option value="50000">M5 (50000 XP)</option>
+      <option value="60000">M6 (60000 XP)</option>
+      <option value="80000">M7 (80000 XP)</option>
+    </select>
+    <br>
+
+    <!-- Ring Bonus -->
+    <label>
+      <input type="checkbox" id="expRing"> 10% Dungeon Experience Ring
+    </label>
+    <br>
+
+    <!-- Aktuelles Level -->
+    <label for="level">Aktuelles Level:</label>
+    <input type="number" id="level" min="1" max="50" value="1">
+    <br>
+
+    <!-- Aktuelle XP -->
+    <label for="currentXp">Aktuelle XP (gesamt):</label>
+    <input type="number" id="currentXp" value="0">
+    <br>
+
+    <button onclick="calculate()">Berechnen</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    // XP Tabelle aus deiner Liste
+    const catacombsXP = [
+      0,50,125,235,395,625,955,1425,2095,3045,4385,
+      6275,8940,12700,17960,25340,35640,50040,70040,
+      97640,135640,188140,259640,356640,488640,668640,
+      911640,1239640,1684640,2284640,3084640,4149640,
+      5559640,7459640,9959640,13259640,17559640,23159640,
+      30359640,39559640,51559640,66559640,85559640,10959640,
+      13959640,17759640,22559640,28559640,36059640,45359640,
+      569809640
+    ];
+
+    function calculate() {
+      const floorXp = parseInt(document.getElementById("floor").value);
+      const hasRing = document.getElementById("expRing").checked;
+      const level = parseInt(document.getElementById("level").value);
+      const currentXp = parseInt(document.getElementById("currentXp").value);
+
+      // Bonus berechnen
+      let xpGain = floorXp;
+      if (hasRing) xpGain = Math.floor(xpGain * 1.1);
+
+      // Ziel für nächstes Level
+      let nextLevelXp = catacombsXP[level] || catacombsXP[catacombsXP.length - 1];
+      let progress = ((currentXp - catacombsXP[level-1]) / (nextLevelXp - catacombsXP[level-1])) * 100;
+
+      document.getElementById("result").innerHTML = `
+        <p><b>XP Gewinn pro Run:</b> ${xpGain.toLocaleString()}</p>
+        <p><b>Gesamt XP:</b> ${currentXp.toLocaleString()}</p>
+        <p><b>Nächstes Level (${level+1}):</b> ${nextLevelXp.toLocaleString()} XP</p>
+        <p><b>Fortschritt:</b> ${progress.toFixed(2)}%</p>
+        <p><b>Noch nötig:</b> ${(nextLevelXp - currentXp).toLocaleString()} XP</p>
+      `;
+    }
+  </script>
+</body>
+</html>
