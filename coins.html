@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coins</title>
+    <title>Hypixel SkyBlock Ziel-Counter</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -20,7 +20,74 @@
             overflow: auto;
             padding: 20px;
             box-sizing: border-box;
+        }
+
+        #dashboard-button {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            padding: 20px;
+            border: 2px solid #fff;
+            border-radius: 10px;
             text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .login-input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ffcc00;
+            background: #444;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+        }
+
+        .login-button {
+            width: 80%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: linear-gradient(180deg, #ffdd44, #ff9900);
+            color: #111;
+            font-weight: bold;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
         }
 
         .page-container {
@@ -225,9 +292,19 @@
         </div>
     </div>
     
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="toggleLoginModal()">&times;</span>
+            <h2>Admin Login</h2>
+            <input type="password" id="admin-passwort-eingabe" class="login-input" placeholder="Admin Passwort">
+            <button id="login-button" class="login-button">Login</button>
+            <p id="login-feedback"></p>
+        </div>
+    </div>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
         import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
         // Firebase-Konfiguration
@@ -241,6 +318,7 @@
             appId: "1:918414851042:web:65822393d076675386d7bb"
         };
         
+        // Initialisiere Firebase und hole die Dienste
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
@@ -253,9 +331,9 @@
         
         // Globale Variablen
         let istAdmin = false;
-        let currentUser;
+        let currentAdminName = null;
         let werte = { nico: 0, niklas: 0 };
-        let ziel = 16000000000;
+        let individuelleZiele = { nico: 0, niklas: 0 };
 
         // DOM-Elemente
         const nicoAnzeige = document.getElementById("nico-anzeige");
@@ -271,6 +349,10 @@
         const fortschrittsBalken = document.getElementById("fortschritts-balken");
         const fortschrittsText = document.getElementById("fortschritts-text");
         const feedbackAnzeige = document.getElementById("feedback");
+        const loginModal = document.getElementById("login-modal");
+        const loginButton = document.getElementById("login-button");
+        const adminPasswortEingabe = document.getElementById("admin-passwort-eingabe");
+        const loginFeedback = document.getElementById("login-feedback");
 
         // Funktionen zum Formatieren von Zahlen
         const formatNumber = (num) => {
@@ -286,20 +368,20 @@
 
         const render = () => {
             const gesamt = werte.nico + werte.niklas;
-            const fortschritt = (gesamt / ziel) * 100;
+            const fortschritt = (gesamt / individuelleZiele.nico) * 100;
             const progress = Math.min(100, fortschritt).toFixed(2);
             
             nicoAnzeige.textContent = `Nico: ${formatNumberWithCommas(werte.nico)}`;
             niklasAnzeige.textContent = `Niklas: ${formatNumberWithCommas(werte.niklas)}`;
             gesamtAnzeige.textContent = formatNumberWithCommas(gesamt);
-            zielAnzeige.textContent = formatNumberWithCommas(ziel);
+            zielAnzeige.textContent = formatNumberWithCommas(individuelleZiele.nico);
             
             fortschrittsBalken.style.width = `${progress}%`;
             fortschrittsBalken.textContent = `${progress}%`;
-            fortschrittsText.textContent = `Ziel: ${formatNumber(gesamt)} / ${formatNumber(ziel)}`;
+            fortschrittsText.textContent = `Ziel: ${formatNumber(gesamt)} / ${formatNumber(individuelleZiele.nico)}`;
 
-            const isNico = currentUser && ADMINS[currentUser.uid] === 'nico';
-            const isNiklas = currentUser && ADMINS[currentUser.uid] === 'niklas';
+            const isNico = istAdmin && currentAdminName === 'nico';
+            const isNiklas = istAdmin && currentAdminName === 'niklas';
             
             nicoEingabe.disabled = !isNico;
             nicoSpeichernBtn.disabled = !isNico;
@@ -309,10 +391,11 @@
             
             zielEingabe.disabled = !istAdmin;
             zielSpeichernBtn.disabled = !istAdmin;
+
         };
 
         const updateCoins = (spieler, wert) => {
-            if (istAdmin && ADMINS[currentUser.uid] === spieler) {
+            if (istAdmin && currentAdminName === spieler) {
                 const neuerWert = parseInt(wert, 10);
                 if (!isNaN(neuerWert)) {
                     update(ref(db, 'coins'), { [spieler]: neuerWert });
@@ -327,7 +410,7 @@
             if (istAdmin) {
                 const neuesZiel = parseInt(wert, 10);
                 if (!isNaN(neuesZiel) && neuesZiel > 0) {
-                    set(ref(db, 'ziel'), neuesZiel);
+                    update(ref(db, 'individual_ziels'), { [currentAdminName]: neuesZiel });
                     feedbackAnzeige.textContent = "Ziel erfolgreich aktualisiert!";
                     feedbackAnzeige.style.color = "#00ff99";
                 } else {
@@ -337,35 +420,76 @@
             }
         };
 
+        // Funktion zum Öffnen/Schließen des Modals
+        function toggleLoginModal() {
+            if (loginModal.style.display === 'flex') {
+                loginModal.style.display = 'none';
+            } else {
+                loginModal.style.display = 'flex';
+            }
+        }
+        
+        loginButton.addEventListener("click", () => {
+            const passwort = adminPasswortEingabe.value;
+            const adminEmail = currentAdminName === 'nico' ? 'nico@test.com' : 'niklas@test.com'; // Dummy-E-Mail
+            
+            if (passwort) {
+                signInWithEmailAndPassword(auth, adminEmail, passwort)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        if (ADMINS[user.uid]) {
+                            loginFeedback.textContent = "Login erfolgreich!";
+                            loginFeedback.style.color = "#00ff99";
+                            toggleLoginModal(); // Schließt Modal bei Erfolg
+                        } else {
+                            signOut(auth);
+                            loginFeedback.textContent = "Ungültige Anmeldedaten!";
+                            loginFeedback.style.color = "#ff6666";
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Login-Fehler:", error);
+                        loginFeedback.textContent = "Falsches Passwort oder Benutzername!";
+                        loginFeedback.style.color = "#ff6666";
+                    });
+            } else {
+                loginFeedback.textContent = "Bitte Passwort eingeben.";
+                loginFeedback.style.color = "#ff6666";
+            }
+        });
+
         nicoSpeichernBtn.addEventListener("click", () => updateCoins('nico', nicoEingabe.value));
         niklasSpeichernBtn.addEventListener("click", () => updateCoins('niklas', niklasEingabe.value));
         zielSpeichernBtn.addEventListener("click", () => updateZiel(zielEingabe.value));
-        
+
         onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            istAdmin = !!(user && ADMINS[user.uid]);
+            if (user && ADMINS[user.uid]) {
+                istAdmin = true;
+                currentAdminName = ADMINS[user.uid];
+                console.log(`Eingeloggt als Admin: ${currentAdminName}`);
+            } else {
+                istAdmin = false;
+                currentAdminName = null;
+            }
             render();
         });
-        
-        // Firebase Realtime Database Listener
+
         onValue(ref(db, 'coins'), (snapshot) => {
             if (snapshot.exists()) {
                 werte = snapshot.val();
             } else {
-                console.warn("Datenbankpfad existiert nicht. Setze Standardwerte.");
                 set(ref(db, 'coins'), { nico: 0, niklas: 0 });
                 werte = { nico: 0, niklas: 0 };
             }
             render();
         });
-
-        onValue(ref(db, 'ziel'), (snapshot) => {
+        
+        onValue(ref(db, 'individual_ziels'), (snapshot) => {
             if (snapshot.exists()) {
-                ziel = snapshot.val();
+                individuelleZiele = snapshot.val();
             } else {
-                console.warn("Ziel-Pfad existiert nicht. Setze Standardziel.");
-                set(ref(db, 'ziel'), 16000000000);
-                ziel = 16000000000;
+                set(ref(db, 'individual_ziels'), { nico: 0, niklas: 0 });
+                individuelleZiele = { nico: 0, niklas: 0 };
             }
             render();
         });
