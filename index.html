@@ -166,6 +166,12 @@
             gap: 20px;
         }
         
+        .main-button-container button {
+            padding: 20px 40px;
+            font-size: 16px;
+            border-radius: 10px;
+        }
+
         .player-sections-container {
             display: flex;
             justify-content: center;
@@ -247,14 +253,21 @@
         </div>
     </div>
 
+    <div id="login-required-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Login erforderlich</h2>
+            <p>Bitte logge dich ein, um diesen Bereich zu betreten.</p>
+        </div>
+    </div>
+
     <!-- MAIN PAGE -->
     <div id="main-page" class="page-container">
         <div class="card">
             <h1>Hypixel SkyBlock Dashboard</h1>
-            <p id="welcome-message">Willkommen, Gast!</p>
             <div class="main-button-container">
                 <button onclick="window.location.hash = '#coins'">💰 COOP Coins Counter</button>
-                <button id="item-manager-button" class="hidden">📦 Item-Manager</button>
+                <button id="items-button">📦 Item-Manager</button>
             </div>
         </div>
     </div>
@@ -356,12 +369,13 @@
         const backButton = document.getElementById("back-button");
         const loginModal = document.getElementById("login-modal");
         const itemManagerModal = document.getElementById("item-manager-modal");
+        const loginRequiredModal = document.getElementById("login-required-modal");
         const closeButtons = document.querySelectorAll(".modal .close-button");
         const emailInput = document.getElementById("email-input");
         const passwordInput = document.getElementById("password");
         const loginButton = document.getElementById("login-button");
         const feedbackLogin = document.getElementById("feedback-login");
-        const itemManagerButton = document.getElementById("item-manager-button");
+        const itemsButton = document.getElementById("items-button");
         const zielSpeichernButton = document.getElementById("ziel-speichern-button");
 
         const pages = {
@@ -463,12 +477,8 @@
             renderPage();
             if (istAdmin) {
                 loginToggleButton.textContent = "Logout";
-                itemManagerButton.classList.remove('hidden');
-                document.getElementById('welcome-message').textContent = `Willkommen, ${currentAdminName}!`;
             } else {
                 loginToggleButton.textContent = "Login";
-                itemManagerButton.classList.add('hidden');
-                document.getElementById('welcome-message').textContent = "Willkommen, Gast!";
             }
         }
         
@@ -480,10 +490,12 @@
                 loginModal.style.display = 'flex';
             }
         });
-
-        itemManagerButton.addEventListener("click", () => {
+        
+        itemsButton.addEventListener("click", () => {
             if (istAdmin) {
                 itemManagerModal.style.display = 'flex';
+            } else {
+                loginRequiredModal.style.display = 'flex';
             }
         });
 
