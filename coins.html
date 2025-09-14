@@ -22,22 +22,64 @@
             box-sizing: border-box;
         }
 
-        .page-container {
+        #login-toggle-button {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
             width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 80vh;
-            flex-direction: column;
         }
 
+        .modal-content {
+            background-color: #1c1c1c;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        .modal .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal .close-button:hover,
+        .modal .close-button:focus {
+            color: #fff;
+            text-decoration: none;
+        }
+        
         .card {
+            position: relative;
+            z-index: 1;
             background: rgba(15, 15, 15, 0.9);
             padding: 28px;
             border-radius: 16px;
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 12px rgba(255, 215, 0, 0.2);
             width: fit-content;
             max-width: 90%;
+            text-align: center;
             border: 2px solid #ffd700;
             display: flex;
             flex-direction: column;
@@ -49,6 +91,73 @@
             color: #ffd700;
             text-shadow: 0 0 6px #ffea00, 0 0 12px #ffa500;
             font-size: 25px;
+        }
+
+        h2 {
+            margin: 20px 0 5px;
+            color: #ffcc33;
+            text-shadow: 0 0 6px #ffaa00;
+            font-size: 18px;
+        }
+
+        .total-coins {
+            font-size: 22px;
+            font-weight: bold;
+            color: #00ff99;
+            text-shadow: 0 0 8px #00ff99;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+
+        .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 4px #ffd700;
+            margin-top: 2px;
+        }
+
+        .controls {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border-radius: 6px;
+            border: 2px solid #ffd700;
+            background: #1c1c1c;
+            color: #e6eef8;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        
+        #password {
+            width: 250px;
+            margin-right: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+        
+        #email-input {
+            width: 250px;
+            margin-right: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
+        .login-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
         }
 
         button {
@@ -63,7 +172,6 @@
             font-size: 12px;
             text-shadow: 0 0 4px #ffd700;
             transition: transform 0.1s, box-shadow 0.2s;
-            margin: 5px;
         }
 
         button:hover {
@@ -71,312 +179,435 @@
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
         }
 
-        .page-header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            background: transparent;
-            z-index: 100;
-        }
-        
-        .coin-counter {
-            background: rgba(15, 15, 15, 0.9);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-            border: 1px solid #ffcc00;
-            width: fit-content;
-        }
-
-        .counter-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #ffcc00;
-        }
-        
-        .counter-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .counter-section h2 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #ffcc00;
-            text-shadow: 0 0 5px #ffea00;
-        }
-
-        .counter-section span {
-            display: block;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
+        button.minus {
+            background: linear-gradient(180deg, #e63939, #a83232);
             color: #fff;
-            text-shadow: 0 0 5px #ffea00;
+            text-shadow: 0 0 4px #000;
         }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
+        .remaining {
+            font-size: 20px;
+            color: #ffecb3;
             margin-top: 10px;
-            justify-content: center;
         }
 
-        .input-group input {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ffcc00;
-            background: #2a2a2a;
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 10px;
-            max-width: 100px;
-            text-align: center;
+        #login-area {
+            margin-bottom: 20px;
         }
 
-        .progress-bar-container {
-            width: 100%;
-            background-color: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 2px solid #ffd700;
-            margin-top: 20px;
-            height: 30px;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #ffcc00, #ffea00, #ffcc00);
-            background-size: 200% 100%;
-            animation: pulse 4s infinite;
-            transition: width 0.5s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: #111;
-            font-weight: bold;
-            text-shadow: 0 0 4px #fff;
-        }
-
-        @keyframes pulse {
-            0% { background-position: 100% 0; }
-            50% { background-position: 0% 0; }
-            100% { background-position: 100% 0; }
-        }
-
-        .progress-text {
-            color: #ffea00;
+        #feedback {
             margin-top: 10px;
             font-size: 12px;
+            color: #ff6666;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .player-sections-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .player-section {
+            flex: 1;
+            min-width: 280px;
+            background: rgba(30, 30, 30, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #ffcc33;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.3);
+        }
+
+        .player-section .controls {
+            flex-direction: row;
+            justify-content: center;
+        }
+        
+        .ziel-input-container {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .ziel-input-container input {
+            width: 200px;
+        }
+
+        /* Responsive Design für kleinere Bildschirme */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .player-sections-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .total-coins {
+                font-size: 18px;
+            }
+            
+            #login-toggle-button {
+                top: 10px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div id="coins-page" class="page-container">
-        <div class="page-header">
-            <!-- Neuer Dashboard-Button -->
-            <button onclick="goToDashboard()">Dashboard</button>
-        </div>
-        <div class="card coin-counter">
-            <h1>Hypixel SkyBlock Ziel-Counter</h1>
-            <div id="gesamter-betrag" class="counter-section">
-                <h2>Gesamter Betrag</h2>
-                <span id="gesamt-anzeige"></span>
-            </div>
-
-            <div class="progress-bar-container">
-                <div id="fortschritts-balken" class="progress-bar"></div>
-            </div>
-            <div id="fortschritts-text" class="progress-text"></div>
-
-            <div class="counter-section">
-                <h2>Coins</h2>
-                <span id="nico-anzeige"></span>
-                <div class="input-group">
-                    <input type="text" id="nico-eingabe" placeholder="Wert für Nico">
-                    <button id="nico-speichern">Speichern</button>
-                </div>
-            </div>
-
-            <div class="counter-section">
-                <span id="niklas-anzeige"></span>
-                <div class="input-group">
-                    <input type="text" id="niklas-eingabe" placeholder="Wert für Niklas">
-                    <button id="niklas-speichern">Speichern</button>
-                </div>
-            </div>
-
-            <div class="counter-section">
-                <h2>Aktuelles Ziel</h2>
-                <span id="ziel-anzeige"></span>
-                <div class="input-group">
-                    <input type="text" id="ziel-eingabe" placeholder="Neues Ziel setzen">
-                    <button id="ziel-speichern">Ziel speichern</button>
-                </div>
-                <div id="feedback" style="margin-top: 10px;"></div>
+    <button id="login-toggle-button">Login</button>
+    
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="login-area" class="login-controls">
+                <h2>Admin Login</h2>
+                <input type="email" id="email-input" placeholder="Admin E-Mail" />
+                <input type="password" id="password" placeholder="Admin Passwort" />
+                <button id="login-button">Login</button>
+                <div id="feedback"></div>
             </div>
         </div>
     </div>
     
+    <div class="card">
+        <h1 id="ziel-anzeige">Gesamt-Ziel: 0 Coins</h1>
+        <div id="ziel-bearbeiten-bereich" class="hidden">
+            <input type="text" id="ziel-input" placeholder="Dein Ziel (z.B. 8b)" />
+            <button id="ziel-speichern-button">Ziel festlegen</button>
+        </div>
+        <div class="total-coins" id="coins-insgesamt">Coins Insgesamt: 0</div>
+        <div class="remaining" id="coins-verbleibend">Coins Verbleibend: 0</div>
+
+        <div class="player-sections-container">
+            <div id="nico-section" class="player-section">
+                <h2>🪙 Nico</h2>
+                <div class="remaining" id="nico-value">0</div>
+                <div class="value" id="nico-remaining">Verbleibend: 0</div>
+                <div class="controls hidden" id="nico-controls">
+                    <input type="text" id="nico-input" placeholder="Coins eingeben" />
+                    <select id="nico-action-select">
+                        <option value="add">Hinzufügen</option>
+                        <option value="remove">Entfernen</option>
+                        <option value="set">Setzen</option>
+                    </select>
+                    <button id="nico-update-button">Ausführen</button>
+                </div>
+            </div>
+
+            <div id="niklas-section" class="player-section">
+                <h2>🪙 Niklas</h2>
+                <div class="remaining" id="niklas-value">0</div>
+                <div class="value" id="niklas-remaining">Verbleibend: 0</div>
+                <div class="controls hidden" id="niklas-controls">
+                    <input type="text" id="niklas-input" placeholder="Coins eingeben" />
+                    <select id="niklas-action-select">
+                        <option value="add">Hinzufügen</option>
+                        <option value="remove">Entfernen</option>
+                        <option value="set">Setzen</option>
+                    </select>
+                    <button id="niklas-update-button">Ausführen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-        // Firebase-Konfiguration
         const firebaseConfig = {
-            apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
-            authDomain: "hypixel-skyblock-coop.firebaseapp.com",
-            databaseURL: "https://hypixel-skyblock-coop-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "hypixel-skyblock-coop",
-            storageBucket: "hypixel-skyblock-coop.firebasestorage.app",
-            messagingSenderId: "918414851042",
-            appId: "1:918414851042:web:65822393d076675386d7bb"
+          apiKey: "AIzaSyAdYRQu1Ck2tjCjzJ3Qojdi8DlURU_tyI8",
+          authDomain: "hypixel-skyblock-coop.firebaseapp.com",
+          databaseURL: "https://hypixel-skyblock-coop-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "hypixel-skyblock-coop",
+          storageBucket: "hypixel-skyblock-coop.firebasestorage.app",
+          messagingSenderId: "918414851042",
+          appId: "1:918414851042:web:65822393d076675386d7bb"
         };
-        
-        // Initialisiere Firebase und hole die Dienste
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
 
-        // Mapping von Firebase UID zu Spielernamen
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
         const ADMINS = {
             "qeSQevrTCJW2jWVGSqVxUjmvULG2": "nico",
             "96UHM3bF3UamlTr1QJLcmTMcnRK2": "niklas"
         };
-        
-        // Globale Variablen
-        let istAdmin = false;
-        let currentAdminName = null;
-        let werte = { nico: 0, niklas: 0 };
-        let individuelleZiele = { nico: 0, niklas: 0 };
 
-        // DOM-Elemente
-        const nicoAnzeige = document.getElementById("nico-anzeige");
-        const niklasAnzeige = document.getElementById("niklas-anzeige");
-        const gesamtAnzeige = document.getElementById("gesamt-anzeige");
-        const zielAnzeige = document.getElementById("ziel-anzeige");
-        const nicoEingabe = document.getElementById("nico-eingabe");
-        const niklasEingabe = document.getElementById("niklas-eingabe");
-        const zielEingabe = document.getElementById("ziel-eingabe");
-        const nicoSpeichernBtn = document.getElementById("nico-speichern");
-        const niklasSpeichernBtn = document.getElementById("niklas-speichern");
-        const zielSpeichernBtn = document.getElementById("ziel-speichern");
-        const fortschrittsBalken = document.getElementById("fortschritts-balken");
-        const fortschrittsText = document.getElementById("fortschritts-text");
-        const feedbackAnzeige = document.getElementById("feedback");
-
-        // Funktion zum Navigieren zum Dashboard
-        function goToDashboard() {
-            window.location.href = 'dashboard.html';
-        }
-
-        // Funktionen zum Formatieren von Zahlen
-        const formatNumber = (num) => {
-            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-            if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-            return num;
-        };
-        
-        const formatNumberWithCommas = (num) => {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        };
-
-        const render = () => {
-            const gesamt = werte.nico + werte.niklas;
-            const fortschritt = (gesamt / individuelleZiele.nico) * 100;
-            const progress = Math.min(100, fortschritt).toFixed(2);
+        document.addEventListener('DOMContentLoaded', () => {
+            let werte = {
+                nico: 0,
+                niklas: 0
+            };
+            let individuelleZiele = {
+                nico: 0,
+                niklas: 0
+            };
+            let istAdmin = false;
+            let currentAdminName = null;
             
-            nicoAnzeige.textContent = `Nico: ${formatNumberWithCommas(werte.nico)}`;
-            niklasAnzeige.textContent = `Niklas: ${formatNumberWithCommas(werte.niklas)}`;
-            gesamtAnzeige.textContent = formatNumberWithCommas(gesamt);
-            zielAnzeige.textContent = formatNumberWithCommas(individuelleZiele.nico);
+            const loginToggleButton = document.getElementById("login-toggle-button");
+            const loginModal = document.getElementById("login-modal");
+            const closeButton = document.querySelector(".modal .close-button");
+            const emailInput = document.getElementById("email-input");
+            const passwordInput = document.getElementById("password");
+            const loginButton = document.getElementById("login-button");
+            const feedbackElement = document.getElementById("feedback");
             
-            fortschrittsBalken.style.width = `${progress}%`;
-            fortschrittsBalken.textContent = `${progress}%`;
-            fortschrittsText.textContent = `Ziel: ${formatNumber(gesamt)} / ${formatNumber(individuelleZiele.nico)}`;
+            const modalContent = document.querySelector(".modal-content");
 
-            const isNico = istAdmin && currentAdminName === 'nico';
-            const isNiklas = istAdmin && currentAdminName === 'niklas';
+            modalContent.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
             
-            nicoEingabe.disabled = !isNico;
-            nicoSpeichernBtn.disabled = !isNico;
-            
-            niklasEingabe.disabled = !isNiklas;
-            niklasSpeichernBtn.disabled = !isNiklas;
-            
-            zielEingabe.disabled = !istAdmin;
-            zielSpeichernBtn.disabled = !istAdmin;
-
-        };
-
-        const updateCoins = (spieler, wert) => {
-            if (istAdmin && currentAdminName === spieler) {
-                const neuerWert = parseInt(wert, 10);
-                if (!isNaN(neuerWert)) {
-                    update(ref(db, 'coins'), { [spieler]: neuerWert });
+            loginToggleButton.addEventListener("click", () => {
+                if (istAdmin) {
+                    logout();
                 } else {
-                    feedbackAnzeige.textContent = "Ungültige Eingabe!";
-                    feedbackAnzeige.style.color = "#ff6666";
+                    loginModal.classList.remove("hidden");
+                    feedbackElement.textContent = "";
+                    emailInput.value = "";
+                    passwordInput.value = "";
+                }
+            });
+
+            closeButton.addEventListener("click", () => {
+                loginModal.classList.add("hidden");
+                feedbackElement.textContent = "";
+                emailInput.value = "";
+                passwordInput.value = "";
+            });
+            
+            window.addEventListener("click", (event) => {
+                if (event.target === loginModal) {
+                    loginModal.classList.add("hidden");
+                    feedbackElement.textContent = "";
+                    emailInput.value = "";
+                    passwordInput.value = "";
+                }
+            });
+
+            function formatNumber(n) {
+                if (n === null || n === undefined) return '0';
+                return n.toLocaleString('de-DE');
+            }
+
+            function formatWithSuffix(n) {
+                if (n === null || n === undefined) return '0';
+                if (n < 1000) {
+                    return n.toLocaleString('de-DE');
+                }
+                const suffixes = ["", "k", "m", "b", "t", "q"];
+                const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
+                const suffix = suffixes[tier];
+                const rounded = (n / Math.pow(1000, tier)).toFixed(3).replace(/\.0+$/, '');
+                return `${rounded}${suffix}`;
+            }
+
+            function parseWithSuffix(input) {
+                const cleanedInput = String(input).replace(/ /g, '').toLowerCase();
+                const suffixes = {
+                    'k': 1000,
+                    'm': 1000000,
+                    'b': 1000000000,
+                    't': 1000000000000
+                };
+                const suffix = cleanedInput.slice(-1);
+                const value = parseFloat(cleanedInput);
+                
+                if (suffixes[suffix]) {
+                    return value * suffixes[suffix];
+                }
+                return value;
+            }
+            
+            function updateZiel() {
+                if (!istAdmin) return;
+                const input = document.getElementById(`ziel-input`);
+                let neuesZiel = parseWithSuffix(input.value);
+
+                if (isNaN(neuesZiel) || neuesZiel < 0) {
+                    feedbackElement.textContent = "Ungültige Zieleingabe!";
+                    feedbackElement.style.color = "#ff6666";
+                    return;
+                }
+
+                input.value = "";
+                try {
+                    set(ref(db, `individual_ziels/${currentAdminName}`), neuesZiel);
+                    console.log(`Ziel für ${currentAdminName} erfolgreich gespeichert.`);
+                } catch (error) {
+                    console.error("Fehler beim Speichern des Ziels:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung!";
+                    feedbackElement.style.color = "#ff6666";
                 }
             }
-        };
 
-        const updateZiel = (wert) => {
-            if (istAdmin) {
-                const neuesZiel = parseInt(wert, 10);
-                if (!isNaN(neuesZiel) && neuesZiel > 0) {
-                    update(ref(db, 'individual_ziels'), { [currentAdminName]: neuesZiel });
-                    feedbackAnzeige.textContent = "Ziel erfolgreich aktualisiert!";
-                    feedbackAnzeige.style.color = "#00ff99";
-                } else {
-                    feedbackAnzeige.textContent = "Ungültige Zieleingabe!";
-                    feedbackAnzeige.style.color = "#ff6666";
+            async function updateCoins(name) {
+                if (!istAdmin) return;
+                const input = document.getElementById(`${name}-input`);
+                const actionSelect = document.getElementById(`${name}-action-select`);
+                const action = actionSelect.value;
+                let val = parseWithSuffix(input.value);
+
+                if (isNaN(val) || val < 0) {
+                    feedbackElement.textContent = "Ungültige Eingabe!";
+                    feedbackElement.style.color = "#ff6666";
+                    return;
+                }
+                
+                const snapshot = await get(ref(db, `coins/${name}`));
+                let currentValue = snapshot.exists() ? snapshot.val() : 0;
+
+                if (action === 'add') {
+                    currentValue += val;
+                } else if (action === 'remove') {
+                    currentValue -= val;
+                    if (currentValue < 0) currentValue = 0;
+                } else if (action === 'set') {
+                    currentValue = val;
+                }
+
+                input.value = "";
+                
+                try {
+                    await set(ref(db, `coins/${name}`), currentValue);
+                    console.log(`Daten für ${name} erfolgreich in Firebase gespeichert.`);
+                } catch (error) {
+                    console.error("Fehler beim Speichern in Firebase:", error);
+                    feedbackElement.textContent = "Fehler: Du hast keine Berechtigung zum Speichern!";
+                    feedbackElement.style.color = "#ff6666";
                 }
             }
-        };
 
-        nicoSpeichernBtn.addEventListener("click", () => updateCoins('nico', nicoEingabe.value));
-        niklasSpeichernBtn.addEventListener("click", () => updateCoins('niklas', niklasEingabe.value));
-        zielSpeichernBtn.addEventListener("click", () => updateZiel(zielEingabe.value));
+            function render() {
+                const totalZiel = (individuelleZiele.nico || 0) + (individuelleZiele.niklas || 0);
+                const totalCoins = (werte.nico || 0) + (werte.niklas || 0);
 
-        onAuthStateChanged(auth, (user) => {
-            if (user && ADMINS[user.uid]) {
-                istAdmin = true;
-                currentAdminName = ADMINS[user.uid];
-                console.log(`Eingeloggt als Admin: ${currentAdminName}`);
-            } else {
-                istAdmin = false;
-                currentAdminName = null;
-            }
-            render();
-        });
+                document.getElementById('ziel-anzeige').textContent = `Gesamt-Ziel: ${formatNumber(totalZiel)} (${formatWithSuffix(totalZiel)}) Coins`;
+                document.getElementById('coins-insgesamt').textContent = `Coins Insgesamt: ${formatNumber(totalCoins)} (${formatWithSuffix(totalCoins)})`;
+                
+                const coinsVerbleibend = totalZiel - totalCoins;
+                document.getElementById('coins-verbleibend').textContent = `Coins Verbleibend: ${formatNumber(coinsVerbleibend)} (${formatWithSuffix(coinsVerbleibend)})`;
 
-        onValue(ref(db, 'coins'), (snapshot) => {
-            if (snapshot.exists()) {
-                werte = snapshot.val();
-            } else {
-                set(ref(db, 'coins'), { nico: 0, niklas: 0 });
-                werte = { nico: 0, niklas: 0 };
+                ["nico", "niklas"].forEach(name => {
+                    const valueElement = document.getElementById(`${name}-value`);
+                    const remainingElement = document.getElementById(`${name}-remaining`);
+                    
+                    valueElement.textContent = `${formatNumber(werte[name] || 0)} (${formatWithSuffix(werte[name] || 0)})`;
+                    
+                    let remaining = (individuelleZiele[name] || 0) - (werte[name] || 0);
+                    if (remaining < 0) remaining = 0;
+                    remainingElement.textContent = `Verbleibend: ${formatNumber(remaining)}`;
+                });
+
+                const nicoControls = document.getElementById("nico-controls");
+                const niklasControls = document.getElementById("niklas-controls");
+                const zielBearbeitenBereich = document.getElementById("ziel-bearbeiten-bereich");
+
+                nicoControls.classList.add("hidden");
+                niklasControls.classList.add("hidden");
+                zielBearbeitenBereich.classList.add("hidden");
+
+                if (istAdmin) {
+                    loginToggleButton.textContent = "Logout";
+                    zielBearbeitenBereich.classList.remove("hidden");
+                    if (currentAdminName === "nico") {
+                        nicoControls.classList.remove("hidden");
+                    } else if (currentAdminName === "niklas") {
+                        niklasControls.classList.remove("hidden");
+                    }
+                } else {
+                    loginToggleButton.textContent = "Login";
+                }
             }
-            render();
-        });
-        
-        onValue(ref(db, 'individual_ziels'), (snapshot) => {
-            if (snapshot.exists()) {
-                individuelleZiele = snapshot.val();
-            } else {
-                set(ref(db, 'individual_ziels'), { nico: 0, niklas: 0 });
-                individuelleZiele = { nico: 0, niklas: 0 };
+            
+            function login() {
+                const email = emailInput.value;
+                const pw = passwordInput.value;
+                
+                signInWithEmailAndPassword(auth, email, pw)
+                    .then(() => {
+                        feedbackElement.textContent = "Erfolgreich eingeloggt!";
+                        feedbackElement.style.color = "#00ff99";
+                        setTimeout(() => {
+                            feedbackElement.textContent = "";
+                        }, 1500);
+                        loginModal.classList.add("hidden");
+                    })
+                    .catch((error) => {
+                        feedbackElement.textContent = "Login fehlgeschlagen!";
+                        feedbackElement.style.color = "#ff6666";
+                        console.error("Login-Fehler:", error.message);
+                    });
             }
-            render();
+
+            function logout() {
+                signOut(auth).then(() => {
+                    feedbackElement.textContent = "Erfolgreich abgemeldet!";
+                    feedbackElement.style.color = "#ffecb3";
+                    setTimeout(() => {
+                        feedbackElement.textContent = "";
+                    }, 1500);
+                }).catch((error) => {
+                    console.error("Logout-Fehler:", error.message);
+                });
+            }
+            
+            loginButton.addEventListener("click", login);
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user && ADMINS[user.uid]) {
+                    istAdmin = true;
+                    currentAdminName = ADMINS[user.uid];
+                    console.log(`Eingeloggt als Admin: ${currentAdminName}`);
+                } else {
+                    istAdmin = false;
+                    currentAdminName = null;
+                }
+                render();
+            });
+
+            document.getElementById("nico-update-button").addEventListener("click", () => updateCoins("nico"));
+            document.getElementById("niklas-update-button").addEventListener("click", () => updateCoins("niklas"));
+            document.getElementById("ziel-speichern-button").addEventListener("click", () => updateZiel());
+
+            onValue(ref(db, 'coins'), (snapshot) => {
+                if (snapshot.exists()) {
+                    werte = snapshot.val();
+                } else {
+                    set(ref(db, 'coins'), { nico: 0, niklas: 0 });
+                    werte = { nico: 0, niklas: 0 };
+                }
+                render();
+            });
+            
+            onValue(ref(db, 'individual_ziels'), (snapshot) => {
+                if (snapshot.exists()) {
+                    individuelleZiele = snapshot.val();
+                } else {
+                    set(ref(db, 'individual_ziels'), { nico: 0, niklas: 0 });
+                    individuelleZiele = { nico: 0, niklas: 0 };
+                }
+                render();
+            });
         });
     </script>
 </body>
