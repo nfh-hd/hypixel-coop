@@ -71,10 +71,20 @@
             transition: transform 0.1s, box-shadow 0.2s;
             margin: 5px;
         }
+        
+        button.edit-button {
+            background: linear-gradient(180deg, #71a9f7, #3a7bd5);
+            color: #fff;
+            text-shadow: 0 0 4px #3a7bd5;
+        }
 
         button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+        
+        button.edit-button:hover {
+            box-shadow: 0 0 10px rgba(58, 123, 213, 0.6);
         }
 
         input {
@@ -133,7 +143,7 @@
 
         .item-row {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 50px;
+            grid-template-columns: 2fr 1fr 1fr 1fr 50px;
             gap: 10px;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 215, 0, 0.3);
@@ -153,7 +163,12 @@
             margin: 0;
         }
         
-        /* Neuer Style für den Login-Bereich */
+        .edit-button {
+            padding: 5px 8px;
+            font-size: 10px;
+            margin: 0;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -177,6 +192,13 @@
             position: relative;
         }
 
+        .modal-content.edit-modal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
         .modal .close-button {
             color: #aaa;
             position: absolute;
@@ -191,6 +213,17 @@
         .modal .close-button:focus {
             color: #fff;
             text-decoration: none;
+        }
+        
+        @media (max-width: 600px) {
+            .item-row {
+                grid-template-columns: 1.5fr 1fr 1fr 1fr 50px;
+                font-size: 10px;
+                gap: 5px;
+            }
+            h1 {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
@@ -207,6 +240,18 @@
             </div>
         </div>
     </div>
+
+    <div id="edit-modal" class="modal hidden">
+        <div class="modal-content edit-modal-content">
+            <span class="close-button" id="edit-close-button">&times;</span>
+            <h2>Item bearbeiten</h2>
+            <p id="edit-item-name"></p>
+            <input type="number" id="editItemPriceInput" placeholder="Neuer Preis">
+            <input type="number" id="editItemQuantityInput" placeholder="Neue Menge">
+            <button id="saveEditButton">Speichern</button>
+        </div>
+    </div>
+
     <div class="page-container">
         <a href="index.html">
             <button>Dashboard</button>
@@ -226,6 +271,7 @@
                     <span style="font-weight: bold;">Item Name</span>
                     <span style="font-weight: bold;">Preis</span>
                     <span style="font-weight: bold;">Menge</span>
+                    <span></span>
                     <span></span>
                 </div>
             </div>
@@ -265,12 +311,20 @@
 
         const loginModal = document.getElementById('login-modal');
         const loginButton = document.getElementById('login-button');
-        const closeButton = document.querySelector('.modal .close-button');
+        const closeButton = document.querySelector('#login-modal .close-button');
         const emailInput = document.getElementById('email-input');
         const passwordInput = document.getElementById('password-input');
         const feedbackElement = document.getElementById('feedback');
 
+        const editModal = document.getElementById('edit-modal');
+        const editCloseButton = document.getElementById('edit-close-button');
+        const editItemNameDisplay = document.getElementById('edit-item-name');
+        const editItemPriceInput = document.getElementById('editItemPriceInput');
+        const editItemQuantityInput = document.getElementById('editItemQuantityInput');
+        const saveEditButton = document.getElementById('saveEditButton');
+
         let currentUser = null;
+        let currentItemKey = null;
 
         const user = pageTitle.includes("Niklas") ? "niklas" : "nico";
 
@@ -288,6 +342,7 @@
                         <span>${item.name}</span>
                         <span>${item.price} Coins</span>
                         <span>${item.quantity}</span>
+                        <button class="edit-button">Edit</button>
                         <button class="delete-button">X</button>
                     `;
                     itemList.appendChild(newItemRow);
@@ -345,17 +400,59 @@
             itemQuantityInput.value = '';
         }
 
-        itemList.addEventListener('click', async function(event) {
+        async function updateItem(key, newPrice, newQuantity) {
             if (!currentUser || ADMINS[currentUser.uid] !== user) {
-                alert('Bitte log dich zuerst ein, um Items zu löschen!');
+                alert('Bitte log dich zuerst ein, um Items zu bearbeiten!');
                 return;
             }
+
+            const itemRef = ref(database, `items/${user}/${key}`);
+            const zielsRef = ref(database, `individual_ziels/${user}`);
+
+            try {
+                // Schritt 1: Alte Item-Daten abrufen, um den alten Preis zu subtrahieren
+                const itemSnapshot = await get(itemRef);
+                const oldItemData = itemSnapshot.val();
+
+                if (oldItemData) {
+                    const oldTotalCost = oldItemData.price * oldItemData.quantity;
+                    const newTotalCost = newPrice * newQuantity;
+                    const changeInCost = newTotalCost - oldTotalCost;
+
+                    // Schritt 2: Item-Daten aktualisieren
+                    const updates = {
+                        price: newPrice,
+                        quantity: newQuantity
+                    };
+                    await update(itemRef, updates);
+
+                    // Schritt 3: Zielwert aktualisieren
+                    const zielSnapshot = await get(zielsRef);
+                    const currentZiel = zielSnapshot.val() || 0;
+                    const newZiel = Math.max(0, currentZiel + changeInCost);
+
+                    await update(ref(database, 'individual_ziels'), { [user]: newZiel });
+                    console.log("Item und Zielwert erfolgreich aktualisiert!");
+                }
+            } catch (error) {
+                console.error("Fehler beim Aktualisieren des Items:", error);
+                alert("Es gab einen Fehler beim Bearbeiten des Items. Bitte versuch es erneut.");
+            }
+        }
+
+        itemList.addEventListener('click', async function(event) {
+            const itemRow = event.target.closest('.item-row');
+            if (!itemRow) return;
+
+            const itemKey = itemRow.getAttribute('data-key');
+            
             if (event.target.classList.contains('delete-button')) {
-                const itemRow = event.target.closest('.item-row');
-                const itemKey = itemRow.getAttribute('data-key');
+                if (!currentUser || ADMINS[currentUser.uid] !== user) {
+                    alert('Bitte log dich zuerst ein, um Items zu löschen!');
+                    return;
+                }
                 
                 try {
-                    // Schritt 1: Item-Daten vor dem Löschen abrufen
                     const itemRef = ref(database, `items/${user}/${itemKey}`);
                     const itemSnapshot = await get(itemRef);
                     const itemData = itemSnapshot.val();
@@ -364,7 +461,6 @@
                         const totalCost = itemData.price * itemData.quantity;
                         const zielsRef = ref(database, `individual_ziels/${user}`);
                         
-                        // Schritt 2: Zielwert aktualisieren
                         const zielSnapshot = await get(zielsRef);
                         const currentZiel = zielSnapshot.val() || 0;
                         const newZiel = Math.max(0, currentZiel - totalCost);
@@ -372,8 +468,6 @@
                         await update(ref(database, 'individual_ziels'), { [user]: newZiel });
                         console.log("Ziel nach Löschung erfolgreich aktualisiert!");
 
-                        // Schritt 3: Item aus der Datenbank löschen
-                        // Wir warten, bis der Zielwert aktualisiert ist, bevor wir das Item löschen
                         await remove(itemRef);
                         console.log("Item erfolgreich gelöscht!");
                     } else {
@@ -383,7 +477,38 @@
                     console.error("Ein Fehler ist beim Löschvorgang aufgetreten:", error);
                     alert("Es gab einen Fehler beim Löschen des Items. Bitte versuch es erneut.");
                 }
+            } else if (event.target.classList.contains('edit-button')) {
+                if (!currentUser || ADMINS[currentUser.uid] !== user) {
+                    alert('Bitte log dich zuerst ein, um Items zu bearbeiten!');
+                    return;
+                }
+                
+                // Popup öffnen und Felder füllen
+                currentItemKey = itemKey;
+                const itemRef = ref(database, `items/${user}/${itemKey}`);
+                const itemSnapshot = await get(itemRef);
+                const itemData = itemSnapshot.val();
+                
+                if (itemData) {
+                    editItemNameDisplay.textContent = `Item: ${itemData.name}`;
+                    editItemPriceInput.value = itemData.price;
+                    editItemQuantityInput.value = itemData.quantity;
+                    editModal.style.display = 'flex';
+                }
             }
+        });
+
+        saveEditButton.addEventListener('click', () => {
+            const newPrice = parseFloat(editItemPriceInput.value);
+            const newQuantity = parseInt(editItemQuantityInput.value);
+
+            if (isNaN(newPrice) || isNaN(newQuantity) || currentItemKey === null) {
+                alert('Bitte gültige Zahlen eingeben.');
+                return;
+            }
+
+            updateItem(currentItemKey, newPrice, newQuantity);
+            editModal.style.display = 'none';
         });
 
         loginButton.addEventListener('click', () => {
@@ -408,6 +533,10 @@
         closeButton.addEventListener('click', () => {
             loginModal.style.display = 'none';
         });
+        
+        editCloseButton.addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
 
         onAuthStateChanged(auth, (userState) => {
             currentUser = userState;
@@ -429,7 +558,7 @@
         addButton.addEventListener('click', addItem);
         
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && event.target.id !== 'editItemPriceInput' && event.target.id !== 'editItemQuantityInput') {
                 addItem();
             }
         });
